@@ -1,5 +1,6 @@
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Confirmation dialogs
     document.querySelectorAll("[data-confirm]").forEach((button) => {
         button.addEventListener("click", (event) => {
             const message = button.dataset.confirm || "Continue?";
@@ -10,9 +11,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    document.querySelectorAll("[data-mood]").forEach((button) => {
+    // Mood selection
+    const moodButtons = document.querySelectorAll("[data-mood]");
+    const selectedMoodField = document.querySelector("#selectedMood");
+
+    moodButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            document.querySelectorAll("[data-mood]").forEach((item) => {
+            moodButtons.forEach((item) => {
                 item.classList.remove("active");
                 item.setAttribute("aria-pressed", "false");
             });
@@ -20,9 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
             button.classList.add("active");
             button.setAttribute("aria-pressed", "true");
 
-            const field = document.querySelector("#selectedMood");
-            if (field) {
-                field.value = button.dataset.mood;
+            if (selectedMoodField) {
+                selectedMoodField.value = button.dataset.mood || "";
             }
         });
     });
