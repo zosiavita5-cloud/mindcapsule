@@ -1,604 +1,523 @@
 
 <?php
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/db.php';
 
-$quotes = $pdo->query(
-    'SELECT message FROM quotes WHERE is_active = 1 ORDER BY id'
-)->fetchAll(PDO::FETCH_COLUMN);
-
-if (!$quotes) {
-    $quotes = [
-        'You can take things one small step at a time.',
-        'Your worth is not measured by your productivity.',
-        'You deserve patience, especially from yourself.'
-    ];
-}
-
-$pageTitle = 'Daily Motivation';
+$pageTitle = 'Support Resources';
 include __DIR__ . '/includes/header.php';
 ?>
 
 <style>
-.motivation-page {
-    --rose: #c65d7b;
-    --rose-dark: #9e3f5c;
-    --pink: #f7dce5;
-    --blush: #fff0f4;
-    --ink: #392d35;
-    --muted: #887983;
-    color: var(--ink);
+.support-page {
+    --support-rose: #c65d7b;
+    --support-rose-dark: #9e3f5c;
+    --support-ink: #49343f;
+    --support-muted: #887984;
+    color: var(--support-ink);
     padding: 30px 0 70px;
 }
-.motivation-page * { box-sizing: border-box; }
-.motivation-page .mot-wrap {
+.support-page * {
+    box-sizing: border-box;
+}
+.support-page .support-wrap {
     width: min(1120px, calc(100% - 36px));
     margin: 0 auto;
 }
 
 /* HERO */
-.motivation-page .mot-hero {
+.support-page .support-hero {
     position: relative;
     overflow: hidden;
     display: grid;
-    grid-template-columns: 1.12fr .88fr;
-    gap: 34px;
+    grid-template-columns: 1.2fr .8fr;
     align-items: center;
-    min-height: 360px;
-    padding: clamp(28px, 5vw, 58px);
-    border: 1px solid #f3dce4;
+    gap: 30px;
+    min-height: 330px;
+    padding: clamp(30px, 5vw, 58px);
+    border: 1px solid #f0d8e1;
     border-radius: 30px;
     background: linear-gradient(
         125deg,
-        #fff7f4 0%,
-        #fff0f5 55%,
-        #f8e4eb 100%
+        #fff8f5 0%,
+        #fff0f5 54%,
+        #f5dfe8 100%
     );
-    box-shadow: 0 18px 50px rgba(142, 74, 98, .09);
+    box-shadow: 0 18px 45px rgba(142, 74, 98, .08);
 }
-.motivation-page .mot-hero::before,
-.motivation-page .mot-hero::after {
+.support-page .support-hero::before {
     content: "";
     position: absolute;
+    width: 250px;
+    height: 250px;
+    top: -120px;
+    right: -60px;
     border-radius: 50%;
-    pointer-events: none;
-}
-.motivation-page .mot-hero::before {
-    width: 230px;
-    height: 230px;
-    right: -75px;
-    top: -95px;
     background: rgba(255,255,255,.5);
 }
-.motivation-page .mot-hero::after {
-    width: 150px;
-    height: 150px;
-    right: 32%;
-    bottom: -105px;
-    background: rgba(226,164,184,.15);
-}
-.motivation-page .mot-hero-copy,
-.motivation-page .mot-quote-art {
+.support-page .support-hero-copy,
+.support-page .support-art {
     position: relative;
     z-index: 1;
 }
-.motivation-page .mot-kicker {
+.support-page .support-eyebrow {
+    margin: 0 0 10px;
+    color: var(--support-rose);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.support-page .support-pill {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin: 0 0 18px;
-    padding: 8px 13px;
-    border: 1px solid #efd1dc;
+    margin-bottom: 20px;
+    padding: 9px 14px;
+    border: 1px solid #efd0dc;
     border-radius: 999px;
-    background: rgba(255,255,255,.75);
-    color: var(--rose-dark);
+    background: rgba(255,255,255,.8);
+    color: #a34e6a;
     font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    font-weight: 750;
 }
-.motivation-page .mot-kicker-dot {
-    width: 7px;
-    height: 7px;
-    display: inline-block;
-    border-radius: 50%;
-    background: var(--rose);
+.support-page .support-pill span {
+    color: #c65d7b;
+    font-size: 15px;
 }
-.motivation-page .mot-hero h1 {
-    max-width: 520px;
+.support-page .support-hero h1 {
+    max-width: 600px;
     margin: 0;
     color: #49313d;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(37px, 5vw, 58px);
+    font-size: clamp(37px, 5vw, 57px);
     font-weight: 500;
-    line-height: 1.08;
-    letter-spacing: -1.8px;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
 }
-.motivation-page .mot-hero h1 em {
-    color: var(--rose);
+.support-page .support-hero h1 em {
+    color: var(--support-rose);
     font-weight: 500;
 }
-.motivation-page .mot-hero-description {
-    max-width: 450px;
+.support-page .support-hero-copy > p:last-child {
+    max-width: 500px;
     margin: 18px 0 0;
     color: #806d78;
-    font-size: 15px;
-    line-height: 1.85;
+    font-size: 14px;
+    line-height: 1.9;
 }
 
-/* DECORATIVE ILLUSTRATION */
-.motivation-page .mot-quote-art {
+/* DECORATIVE SUPPORT ILLUSTRATION */
+.support-page .support-art {
     display: flex;
-    min-height: 240px;
     align-items: center;
     justify-content: center;
+    min-height: 230px;
 }
-.motivation-page .mot-art-circle {
-    width: min(100%, 310px);
-    aspect-ratio: 1 / 1;
+.support-page .support-art-circle {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    width: min(100%, 280px);
+    aspect-ratio: 1;
     border: 1px solid rgba(255,255,255,.9);
     border-radius: 50%;
     background: radial-gradient(
         circle at 35% 25%,
         #fff 0,
-        #fff5f7 35%,
-        #f4d5e0 100%
+        #fff5f8 38%,
+        #f0d2de 100%
     );
     box-shadow:
-        inset 0 0 0 12px rgba(255,255,255,.28),
-        0 20px 45px rgba(160,84,112,.12);
+        inset 0 0 0 12px rgba(255,255,255,.3),
+        0 18px 40px rgba(160,84,112,.1);
 }
-.motivation-page .mot-art-inner {
+.support-page .support-art-inner {
     width: 72%;
-    padding: 28px 20px;
-    border: 1px solid rgba(207,143,165,.4);
-    border-radius: 45% 45% 42% 42%;
+    padding: 27px 16px;
+    border: 1px solid #e9c4d2;
+    border-radius: 45% 45% 43% 43%;
+    background: rgba(255,255,255,.58);
     text-align: center;
     transform: rotate(-4deg);
-    background: rgba(255,255,255,.52);
 }
-.motivation-page .mot-art-sparkle {
-    color: var(--rose);
-    font-size: 27px;
-    line-height: 1;
+.support-page .support-art-symbol {
+    color: var(--support-rose);
+    font-size: 34px;
+    line-height: 1.2;
 }
-.motivation-page .mot-art-inner p {
+.support-page .support-art-inner p {
     margin: 10px 0 0;
     color: #75495c;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(18px, 2.2vw, 24px);
+    font-size: 23px;
     line-height: 1.3;
 }
-.motivation-page .mot-art-caption {
+.support-page .support-art-inner small {
     display: block;
     margin-top: 12px;
     color: #9b7586;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: 1.7px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
 }
-.motivation-page .mot-floating-heart {
+.support-page .support-art-heart {
     position: absolute;
     color: #c65d7b;
     font-size: 25px;
 }
-.motivation-page .mot-heart-one {
+.support-page .support-heart-one {
     top: 12%;
     right: 14%;
-    transform: rotate(12deg);
 }
-.motivation-page .mot-heart-two {
+.support-page .support-heart-two {
+    bottom: 16%;
     left: 12%;
-    bottom: 19%;
     font-size: 18px;
-    transform: rotate(-14deg);
 }
-.motivation-page .mot-star {
+.support-page .support-art-star {
     position: absolute;
-    color: #d9a0b4;
-    font-size: 21px;
+    color: #d4a0b4;
+    font-size: 22px;
 }
-.motivation-page .mot-star-one { left: 17%; top: 17%; }
-.motivation-page .mot-star-two {
-    right: 13%;
-    bottom: 19%;
-    font-size: 16px;
+.support-page .support-star-one {
+    top: 17%;
+    left: 17%;
+}
+.support-page .support-star-two {
+    right: 12%;
+    bottom: 18%;
 }
 
-/* SECTION HEADINGS */
-.motivation-page .mot-quote-section { margin-top: 34px; }
-.motivation-page .mot-section-head {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 18px;
-    margin: 0 0 17px;
+/* SECTION HEADING */
+.support-page .support-intro {
+    margin: 42px 0 22px;
 }
-.motivation-page .mot-eyebrow {
-    margin: 0 0 7px;
-    color: var(--rose);
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-.motivation-page .mot-section-head h2,
-.motivation-page .mot-thoughts-heading h2 {
+.support-page .support-intro h2,
+.support-page .support-note h2 {
     margin: 0;
     color: #49313d;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(25px, 3vw, 34px);
+    font-size: clamp(27px, 3.5vw, 35px);
     font-weight: 500;
     letter-spacing: -.5px;
 }
-.motivation-page .mot-section-note {
-    max-width: 310px;
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
+.support-page .support-intro > p:last-child {
+    max-width: 650px;
+    margin: 12px 0 0;
+    color: var(--support-muted);
+    font-size: 14px;
+    line-height: 1.85;
 }
 
-/* DAILY QUOTE CARD */
-.motivation-page .mot-quote-card {
-    position: relative;
-    overflow: hidden;
-    padding: clamp(28px, 5vw, 48px);
-    border: 1px solid #f0dce3;
-    border-radius: 25px;
-    background: #fff;
-    box-shadow: 0 12px 35px rgba(84,48,65,.055);
-}
-.motivation-page .mot-quote-card::after {
-    content: "“";
-    position: absolute;
-    top: -28px;
-    right: 26px;
-    color: #fff0f4;
-    font-family: Georgia, serif;
-    font-size: 190px;
-    line-height: 1;
-    pointer-events: none;
-}
-.motivation-page .mot-quote-label {
-    position: relative;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #a75b76;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-}
-.motivation-page .mot-quote-label span {
-    display: inline-grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    border-radius: 9px;
-    background: #fff0f4;
-    font-size: 14px;
-}
-.motivation-page .mot-quote-text {
-    position: relative;
-    z-index: 1;
-    max-width: 800px;
-    min-height: 75px;
-    margin: 24px 0 27px;
-    color: #47333e;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(25px, 3.5vw, 39px);
-    line-height: 1.38;
-    letter-spacing: -.5px;
-}
-.motivation-page .mot-quote-footer {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-.motivation-page .mot-quote-byline {
-    color: #9a8791;
-    font-size: 12px;
-}
-.motivation-page .mot-next-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 13px 19px;
-    border: 0;
-    border-radius: 13px;
-    background: var(--rose);
-    color: white;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 750;
-    cursor: pointer;
-    box-shadow: 0 7px 16px rgba(198,93,123,.2);
-    transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
-}
-.motivation-page .mot-next-btn:hover {
-    transform: translateY(-2px);
-    background: var(--rose-dark);
-    box-shadow: 0 10px 22px rgba(198,93,123,.25);
-}
-.motivation-page .mot-next-btn:focus-visible {
-    outline: 3px solid #e9adc1;
-    outline-offset: 3px;
-}
-.motivation-page .mot-next-btn:active { transform: translateY(0); }
-
-/* POSITIVE REMINDER CARDS */
-.motivation-page .mot-thoughts { margin-top: 43px; }
-.motivation-page .mot-thoughts-heading { margin-bottom: 19px; }
-.motivation-page .mot-thoughts-heading p:last-child {
-    max-width: 590px;
-    margin: 10px 0 0;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.8;
-}
-.motivation-page .mot-card-grid {
+/* RESOURCE CARDS */
+.support-page .support-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 17px;
+    gap: 18px;
 }
-.motivation-page .mot-thought-card {
-    min-height: 205px;
-    padding: 25px;
-    border: 1px solid #f0e2e6;
-    border-radius: 21px;
-    background: linear-gradient(145deg, #fff 0%, #fff9fa 100%);
-    box-shadow: 0 9px 25px rgba(84,48,65,.035);
-    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+.support-page .support-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 27px 24px;
+    border: 1px solid #f0e0e6;
+    border-radius: 22px;
+    background: linear-gradient(150deg, #fff 0%, #fff9fb 100%);
+    box-shadow: 0 10px 28px rgba(84,48,65,.04);
+    transition: transform .2s ease, box-shadow .2s ease,
+                border-color .2s ease;
 }
-.motivation-page .mot-thought-card:hover {
+.support-page .support-card:hover {
     transform: translateY(-4px);
-    border-color: #e8c5d2;
+    border-color: #e7c1d0;
     box-shadow: 0 15px 30px rgba(84,48,65,.075);
 }
-.motivation-page .mot-card-icon {
+.support-page .support-card-number {
+    margin-bottom: 22px;
+    color: #b56b85;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+}
+.support-page .support-card-icon {
     display: grid;
-    width: 46px;
-    height: 46px;
+    width: 54px;
+    height: 54px;
     place-items: center;
     margin-bottom: 20px;
-    border: 1px solid #f2d9e2;
-    border-radius: 15px;
+    border: 1px solid #f0d5df;
+    border-radius: 17px;
     background: #fff0f4;
-    font-size: 20px;
+    font-size: 23px;
 }
-.motivation-page .mot-thought-card:nth-child(2) .mot-card-icon {
-    background: #fdf2e6;
-    border-color: #f3e2c9;
+.support-page .support-card:nth-child(2) .support-card-icon {
+    border-color: #f0dfc9;
+    background: #fdf3e7;
 }
-.motivation-page .mot-thought-card:nth-child(3) .mot-card-icon {
-    background: #f1eefb;
-    border-color: #e3dcf5;
+.support-page .support-card:nth-child(3) .support-card-icon {
+    border-color: #e3d9f3;
+    background: #f3effb;
 }
-.motivation-page .mot-thought-card h3 {
-    margin: 0 0 9px;
-    color: #4d3743;
+.support-page .support-card h3 {
+    margin: 0 0 12px;
+    color: #4b3642;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 600;
+    line-height: 1.3;
 }
-.motivation-page .mot-thought-card p {
+.support-page .support-card > p {
+    flex: 1;
     margin: 0;
-    color: #887983;
+    color: #887984;
     font-size: 13px;
-    line-height: 1.8;
+    line-height: 1.9;
 }
-.motivation-page .mot-bottom-note {
+.support-page .support-card-tag {
+    display: inline-block;
+    align-self: flex-start;
+    margin-top: 20px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: #fff0f4;
+    color: #a34e6a;
+    font-size: 10px;
+    font-weight: 750;
+}
+
+/* REMINDER PANEL */
+.support-page .support-note {
+    position: relative;
+    overflow: hidden;
+    margin-top: 26px;
+    padding: clamp(25px, 4vw, 38px);
+    border: 1px solid #ecced9;
+    border-radius: 24px;
+    background: linear-gradient(120deg, #fff0f5, #fff8f5);
+}
+.support-page .support-note-top {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 32px;
-    padding: 18px;
-    border: 1px dashed #e9c7d3;
-    border-radius: 16px;
-    background: rgba(255,245,248,.75);
-    color: #956b7b;
-    text-align: center;
-    font-size: 12px;
-    line-height: 1.7;
+    align-items: flex-start;
+    gap: 17px;
 }
-.motivation-page .mot-bottom-note strong { color: #9e3f5c; }
+.support-page .support-note-icon {
+    display: grid;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border: 1px solid #ecc8d5;
+    border-radius: 15px;
+    background: #fff;
+    color: var(--support-rose);
+    font-size: 22px;
+}
+.support-page .support-note h2 {
+    font-size: 27px;
+}
+.support-page .support-note p {
+    margin: 11px 0 0;
+    color: #806d78;
+    font-size: 13px;
+    line-height: 1.9;
+}
+.support-page .support-notice {
+    margin-top: 22px;
+    padding: 16px 18px;
+    border: 1px solid #efd8e1;
+    border-radius: 14px;
+    background: rgba(255,255,255,.75);
+    color: #8a6676;
+    font-size: 12px;
+    line-height: 1.85;
+}
+.support-page .support-notice strong {
+    color: #9e3f5c;
+}
+.support-page .support-bottom {
+    margin: 25px 0 0;
+    color: #9a8490;
+    font-size: 12px;
+    line-height: 1.8;
+    text-align: center;
+}
 
 /* MOBILE */
 @media (max-width: 760px) {
-    .motivation-page { padding-top: 18px; }
-    .motivation-page .mot-hero {
+    .support-page {
+        padding-top: 18px;
+    }
+    .support-page .support-hero {
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: 10px;
         min-height: 0;
-        padding: 30px 24px 24px;
+        padding: 30px 24px 22px;
         border-radius: 24px;
     }
-    .motivation-page .mot-hero h1 {
-        font-size: clamp(39px, 10vw, 52px);
+    .support-page .support-hero h1 {
+        font-size: clamp(38px, 10vw, 51px);
     }
-    .motivation-page .mot-quote-art { min-height: 200px; }
-    .motivation-page .mot-art-circle { width: min(72vw, 250px); }
-    .motivation-page .mot-section-head {
-        align-items: start;
-        flex-direction: column;
+    .support-page .support-art {
+        min-height: 205px;
     }
-    .motivation-page .mot-card-grid { grid-template-columns: 1fr; }
-    .motivation-page .mot-thought-card { min-height: auto; }
-    .motivation-page .mot-quote-footer {
-        align-items: start;
-        flex-direction: column;
+    .support-page .support-art-circle {
+        width: min(70vw, 245px);
     }
-    .motivation-page .mot-next-btn { width: 100%; }
+    .support-page .support-grid {
+        grid-template-columns: 1fr;
+    }
+    .support-page .support-card {
+        padding: 24px;
+    }
+    .support-page .support-card-number {
+        margin-bottom: 14px;
+    }
+    .support-page .support-intro {
+        margin-top: 32px;
+    }
 }
 @media (prefers-reduced-motion: reduce) {
-    .motivation-page *,
-    .motivation-page *::before,
-    .motivation-page *::after {
-        scroll-behavior: auto !important;
+    .support-page *,
+    .support-page *::before,
+    .support-page *::after {
         transition: none !important;
     }
 }
 </style>
 
-<main class="motivation-page">
-    <div class="mot-wrap">
+<main class="support-page">
+    <div class="support-wrap">
 
-        <section class="mot-hero" aria-labelledby="motivationTitle">
-            <div class="mot-hero-copy">
-                <p class="mot-kicker">
-                    <span class="mot-kicker-dot"></span>
-                    A little space for you
-                </p>
+        <section class="support-hero" aria-labelledby="supportTitle">
+            <div class="support-hero-copy">
+                <div class="support-pill">
+                    <span aria-hidden="true">♡</span>
+                    A safe space to begin
+                </div>
 
-                <h1 id="motivationTitle">
-                    Give yourself a little <em>kindness.</em>
+                <h1 id="supportTitle">
+                    You don't have to do it <em>alone.</em>
                 </h1>
 
-                <p class="mot-hero-description">
-                    School, plans, and everyday life can feel like a lot.
-                    Take a breath, slow down for a moment, and remember that
-                    you are allowed to grow at your own pace.
+                <p>
+                    Some days are harder than others, and asking for help
+                    is okay. You deserve to be listened to, understood,
+                    and supported as you work through life's challenges.
                 </p>
             </div>
 
-            <div class="mot-quote-art" aria-hidden="true">
-                <div class="mot-art-circle">
-                    <span class="mot-floating-heart mot-heart-one">♥</span>
-                    <span class="mot-floating-heart mot-heart-two">♥</span>
-                    <span class="mot-star mot-star-one">✦</span>
-                    <span class="mot-star mot-star-two">✧</span>
+            <div class="support-art" aria-hidden="true">
+                <div class="support-art-circle">
+                    <span class="support-art-heart support-heart-one">♥</span>
+                    <span class="support-art-heart support-heart-two">♥</span>
+                    <span class="support-art-star support-star-one">✦</span>
+                    <span class="support-art-star support-star-two">✧</span>
 
-                    <div class="mot-art-inner">
-                        <div class="mot-art-sparkle">✧</div>
-                        <p>Small steps.<br>Soft heart.<br>Fresh start.</p>
-                        <span class="mot-art-caption">One day at a time</span>
+                    <div class="support-art-inner">
+                        <div class="support-art-symbol">♡</div>
+                        <p>You matter.<br>You are heard.</p>
+                        <small>Support starts here</small>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="mot-quote-section" aria-labelledby="dailyReminderHeading">
-            <div class="mot-section-head">
-                <div>
-                    <p class="mot-eyebrow">Your daily pause</p>
-                    <h2 id="dailyReminderHeading">A reminder to keep close.</h2>
-                </div>
-
-                <p class="mot-section-note">
-                    Read it slowly. Keep the words that you need today.
-                </p>
-            </div>
-
-            <div class="mot-quote-card">
-                <div class="mot-quote-label">
-                    <span aria-hidden="true">♡</span>
-                    A note for your heart
-                </div>
-
-                <p class="mot-quote-text" id="quoteText" aria-live="polite">
-                    <?= e($quotes[0]) ?>
-                </p>
-
-                <div class="mot-quote-footer">
-                    <span class="mot-quote-byline">
-                        A gentle reminder, just for today ✿
-                    </span>
-
-                    <button class="mot-next-btn" type="button" id="nextQuote">
-                        Another reminder <span aria-hidden="true">↗</span>
-                    </button>
-                </div>
-            </div>
+        <section class="support-intro" aria-labelledby="supportOptionsTitle">
+            <p class="support-eyebrow">You deserve support</p>
+            <h2 id="supportOptionsTitle">People you can reach out to.</h2>
+            <p>
+                You don't need to handle every concern by yourself.
+                Here are a few places to start when you need someone
+                to talk to or help figuring out your next step.
+            </p>
         </section>
 
-        <section class="mot-thoughts" aria-labelledby="positiveMindsHeading">
-            <div class="mot-thoughts-heading">
-                <p class="mot-eyebrow">Little things to remember</p>
-                <h2 id="positiveMindsHeading">Let good things find you.</h2>
+        <section class="support-grid" aria-label="Support resources">
+            <article class="support-card">
+                <div class="support-card-number">01 / SCHOOL</div>
+                <div class="support-card-icon" aria-hidden="true">🏫</div>
+
+                <h3>School Guidance Office</h3>
 
                 <p>
-                    Not every day has to be perfect. Sometimes, taking care
-                    of yourself and noticing the little wins is already enough.
+                    Contact your school's official guidance office to ask
+                    about appointments, student counseling, and available
+                    support services. You can ask a teacher how to reach them.
                 </p>
+
+                <span class="support-card-tag">Student support</span>
+            </article>
+
+            <article class="support-card">
+                <div class="support-card-number">02 / YOUR CIRCLE</div>
+                <div class="support-card-icon" aria-hidden="true">🫶</div>
+
+                <h3>A Trusted Person</h3>
+
+                <p>
+                    Consider talking with a trusted family member, teacher,
+                    friend, or another supportive adult. You can start by
+                    sharing only what you feel comfortable sharing.
+                </p>
+
+                <span class="support-card-tag">Someone to listen</span>
+            </article>
+
+            <article class="support-card">
+                <div class="support-card-number">03 / PROFESSIONAL</div>
+                <div class="support-card-icon" aria-hidden="true">🌷</div>
+
+                <h3>Professional Support</h3>
+
+                <p>
+                    If your concerns continue or feel overwhelming,
+                    consider contacting a qualified mental health
+                    professional who can help you explore your options.
+                </p>
+
+                <span class="support-card-tag">Qualified assistance</span>
+            </article>
+        </section>
+
+        <section class="support-note" aria-labelledby="gentleReminderTitle">
+            <div class="support-note-top">
+                <div class="support-note-icon" aria-hidden="true">♡</div>
+
+                <div>
+                    <p class="support-eyebrow">A gentle reminder</p>
+                    <h2 id="gentleReminderTitle">
+                        Your feelings deserve care.
+                    </h2>
+
+                    <p>
+                        You deserve to be heard and supported. You don't
+                        have to explain everything perfectly to ask for help.
+                        If you feel unsafe or are in immediate danger,
+                        reach out to a trusted adult and contact local
+                        emergency services for urgent assistance.
+                    </p>
+                </div>
             </div>
 
-            <div class="mot-card-grid">
-                <article class="mot-thought-card">
-                    <div class="mot-card-icon" aria-hidden="true">🌷</div>
-                    <h3>Celebrate small wins.</h3>
-                    <p>
-                        Finished a task? Got through a difficult day?
-                        Give yourself credit. Little progress is still progress.
-                    </p>
-                </article>
-
-                <article class="mot-thought-card">
-                    <div class="mot-card-icon" aria-hidden="true">☁️</div>
-                    <h3>Rest is part of the process.</h3>
-                    <p>
-                        You are a person, not a productivity machine.
-                        A pause can help you return with a little more energy.
-                    </p>
-                </article>
-
-                <article class="mot-thought-card">
-                    <div class="mot-card-icon" aria-hidden="true">🌱</div>
-                    <h3>Grow at your own pace.</h3>
-                    <p>
-                        Your journey does not need to look like anyone else's.
-                        Keep learning, keep trying, and give yourself time.
-                    </p>
-                </article>
+            <div class="support-notice">
+                <strong>For the website administrator:</strong>
+                Before publishing this page, add verified contact details
+                for your school's guidance office and appropriate local
+                support services. Confirm their official contact information
+                and availability before displaying it to students.
             </div>
         </section>
 
-        <div class="mot-bottom-note">
-            <span aria-hidden="true">♡</span>
-            <span>
-                <strong>Before you go:</strong>
-                You do not have to figure everything out today.
-                One small step is enough.
-            </span>
-        </div>
+        <p class="support-bottom">
+            Mind Capsule offers encouragement and reflection tools.
+            This page does not replace professional mental health care.
+            <br>
+            Take things one step at a time. You deserve support. ♡
+        </p>
 
     </div>
 </main>
-
-<script>
-const motivationQuotes = <?= json_encode(
-    array_values($quotes),
-    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-) ?>;
-
-let currentQuoteIndex = 0;
-
-const quoteText = document.getElementById('quoteText');
-const nextQuoteButton = document.getElementById('nextQuote');
-
-if (quoteText && nextQuoteButton && motivationQuotes.length > 0) {
-    nextQuoteButton.addEventListener('click', function () {
-        if (motivationQuotes.length > 1) {
-            currentQuoteIndex =
-                (currentQuoteIndex + 1) % motivationQuotes.length;
-        }
-
-        quoteText.textContent = motivationQuotes[currentQuoteIndex];
-    });
-}
-</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
