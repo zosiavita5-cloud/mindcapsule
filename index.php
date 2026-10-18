@@ -1,240 +1,132 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/db.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$pageTitle = 'Home';
-include __DIR__ . '/includes/header.php';
+$currentScript = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+$isAdminPage = strpos($currentScript, '/admin/') !== false;
+$baseUrl = $isAdminPage ? '../' : '';
+
+$pageTitle = $pageTitle ?? 'Home';
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#7d2948">
 
-<style>
-/* --- HOMEPAGE CONTAINER BOX DESIGN --- */
-.home-page {
-    --home-rose: #b95f7d;
-    --home-burgundy: #7f203c;
-    --home-dark: #49343f;
-    --home-muted: #887781;
-    background-color: #fbf9f7;
-    color: var(--home-dark);
-    padding: 20px 0 60px;
-}
+    <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> | Mind Capsule</title>
 
-.home-page .home-container-box {
-    max-width: 1250px;
-    margin: 0 auto;
-    background: linear-gradient(135deg, #fff4f6 0%, #fff7f9 50%, #fff0f3 100%);
-    border: 1px solid #f2cbd7;
-    border-radius: 35px;
-    padding: clamp(30px, 5vw, 60px);
-    box-shadow: 0 20px 50px rgba(185, 95, 125, 0.08);
-}
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="<?= $baseUrl ?>assets/css/style.css">
 
-.home-page .home-hero {
-    display: grid;
-    grid-template-columns: 1.25fr 0.75fr;
-    align-items: center;
-    gap: 40px;
-    margin-bottom: 50px;
-}
+    <style>
+        /* --- CLEAN SINGLE-ROW NAVBAR MATCHING SCREENSHOT --- */
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif, system-ui;
+            background-color: #fbf9f7; /* Off-white cream match */
+            color: #49343f;
+        }
 
-.home-page .home-eyebrow {
-    color: var(--home-rose);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin: 0 0 14px;
-}
+        .site-header {
+            background: transparent;
+            padding: 24px 40px;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-.home-page .home-hero h1 {
-    margin: 0 0 20px;
-    color: var(--home-burgundy);
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: clamp(38px, 5.5vw, 62px);
-    font-weight: 500;
-    line-height: 1.15;
-}
+        .navbar {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.home-page .home-hero h1 span {
-    color: var(--home-rose);
-    font-style: italic;
-}
+        .logo {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 26px;
+            font-weight: 500;
+            color: #49343f;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+        }
 
-.home-page .home-hero p {
-    color: var(--home-muted);
-    font-size: 15.5px;
-    line-height: 1.9;
-    max-width: 550px;
-    margin: 0 0 30px;
-}
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
 
-.home-page .home-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 28px;
-    background: var(--home-burgundy);
-    color: #fff;
-    border-radius: 30px;
-    font-weight: 600;
-    text-decoration: none;
-    box-shadow: 0 8px 20px rgba(127, 32, 60, 0.2);
-    transition: transform 0.2s, background 0.2s;
-}
+        .nav-links a {
+            color: #786671;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+        }
 
-.home-page .home-btn:hover {
-    background: var(--home-rose);
-    transform: translateY(-2px);
-}
+        .nav-links a:hover {
+            color: #b95f7d;
+        }
 
-.home-page .home-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+        /* Log out button styling to match screenshot */
+        .nav-links a[href*="logout.php"] {
+            background: #b95f7d;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(185, 95, 125, 0.25);
+            transition: transform 0.2s, background 0.2s;
+        }
 
-.home-page .home-circle {
-    width: 220px;
-    height: 220px;
-    background: var(--home-burgundy);
-    border: 12px solid #f7d4df;
-    border-radius: 50%;
-    box-shadow: 0 0 0 12px rgba(255,255,255,.6), 0 0 0 26px rgba(231,139,164,.12);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    text-align: center;
-    font-family: 'Playfair Display', Georgia, serif;
-    padding: 20px;
-}
+        .nav-links a[href*="logout.php"]:hover {
+            background: #a44e6c;
+            color: #fff;
+            transform: translateY(-1px);
+        }
 
-.home-page .home-circle h3 {
-    margin: 0;
-    font-size: 26px;
-    color: #fff;
-}
+        /* Mobile / smaller screens responsive */
+        @media (max-width: 900px) {
+            .site-header { padding: 15px 20px; }
+            .nav-links { gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+            .nav-links a { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
 
-.home-page .home-circle p {
-    margin: 6px 0 0;
-    font-size: 10.5px;
-    font-family: 'DM Sans', sans-serif;
-    letter-spacing: 1px;
-    opacity: 0.9;
-}
+<header class="site-header">
+    <nav class="navbar">
+        <a class="logo" href="<?= $baseUrl ?>index.php">
+            mind.capsule
+        </a>
 
-.home-page .home-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-    margin-top: 40px;
-}
-
-.home-page .home-card {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #efd0db;
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 10px 30px rgba(127, 32, 60, 0.04);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.home-page .home-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(127, 32, 60, 0.08);
-}
-
-.home-page .home-card h3 {
-    margin: 0 0 10px;
-    color: var(--home-burgundy);
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 21px;
-}
-
-.home-page .home-card p {
-    margin: 0;
-    color: var(--home-muted);
-    font-size: 13.5px;
-    line-height: 1.8;
-}
-
-@media (max-width: 900px) {
-    .home-page .home-container-box {
-        padding: 20px;
-        border-radius: 20px;
-    }
-    .home-page .home-hero {
-        grid-template-columns: 1fr;
-        text-align: center;
-    }
-    .home-page .home-hero p {
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .home-page .home-btn {
-        margin: 0 auto;
-    }
-    .home-page .home-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
-<div class="home-page">
-    <div class="container">
-        
-        <!-- MALAKING PINK CONTAINER BOX -->
-        <div class="home-container-box">
+        <div class="nav-links">
+            <a href="<?= $baseUrl ?>index.php">Home</a>
+            <a href="<?= $baseUrl ?>freedom-wall.php">Freedom Wall</a>
+            <a href="<?= $baseUrl ?>mood-daily.php">Mood Tracker</a>
+            <a href="<?= $baseUrl ?>task-planner.php">Task Planner</a>
+            <a href="<?= $baseUrl ?>calm-corner.php">Calm Corner</a>
             
-            <!-- HERO SECTION -->
-            <section class="home-hero">
-                <div>
-                    <p class="home-eyebrow">A LITTLE SPACE JUST FOR YOU</p>
-                    <h1>Your feelings deserve a <span>safe place.</span></h1>
-                    <p>
-                        School can get overwhelming, and life does not always go as planned. Mind 
-                        Capsule is a gentle space where you can express yourself, understand your 
-                        feelings, and take things one step at a time.
-                    </p>
-                    <a href="freedom-wall.php" class="home-btn">Visit your safe space</a>
-                </div>
-
-                <div class="home-visual">
-                    <div class="home-circle">
-                        <h3>Mind</h3>
-                        <p>PAUSE. BREATHE. BEGIN.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- FEATURES / CARDS GRID -->
-            <div style="margin-top: 45px;">
-                <p class="home-eyebrow">FEATURES</p>
-                <h2 style="font-family:'Playfair Display',Georgia,serif; font-size:30px; color:#7f203c; margin:4px 0 22px;">
-                    Everything you need to find your balance.
-                </h2>
-            </div>
-
-            <div class="home-grid">
-                <article class="home-card">
-                    <h3>Freedom Wall</h3>
-                    <p>Share your heavy thoughts, little victories, and personal reflections anonymously or openly without judgment.</p>
-                </article>
-
-                <article class="home-card">
-                    <h3>Mood Tracker</h3>
-                    <p>Check in with yourself daily, record how you're feeling, and look back on your emotional patterns over time.</p>
-                </article>
-
-                <article class="home-card">
-                    <h3>Task Planner</h3>
-                    <p>Break down your academic or personal goals into small, manageable steps so you never feel overwhelmed.</p>
-                </article>
-            </div>
-
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="<?= $baseUrl ?>logout.php">Log out</a>
+            <?php else: ?>
+                <a href="<?= $baseUrl ?>login.php">Log in</a>
+            <?php endif; ?>
         </div>
+    </nav>
+</header>
 
-    </div>
-</div>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<main class="page-content">
