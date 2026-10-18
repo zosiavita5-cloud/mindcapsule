@@ -1,4 +1,4 @@
-
+```php
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
@@ -16,6 +16,7 @@ $userId = (int) $_SESSION['user_id'];
 $action = $_POST['action'] ?? '';
 $postId = filter_input(INPUT_POST, 'post_id', FILTER_VALIDATE_INT);
 
+// Only allow known internal pages as redirect destinations.
 $redirect = $_POST['redirect'] ?? 'freedom-wall.php';
 $allowed = ['freedom-wall.php', 'profile.php'];
 
@@ -46,15 +47,14 @@ try {
     $postOwnerId = (int) $post['user_id'];
 
     if ($action === 'like') {
-        // INSERT IGNORE prevents duplicate likes when the table
-        // has a unique constraint for post_id + user_id.
+        // Avoid duplicate likes.
         $stmt = $pdo->prepare(
             'INSERT IGNORE INTO post_likes (post_id, user_id)
              VALUES (?, ?)'
         );
         $stmt->execute([$postId, $userId]);
 
-        // Notify only when a new like was actually inserted.
+        // Notify the post owner only if a new like was added.
         if ($stmt->rowCount() > 0 && $postOwnerId !== $userId) {
             try {
                 $notification = $pdo->prepare(
@@ -70,10 +70,10 @@ try {
                     'like',
                     'New like',
                     'Someone liked your post.',
-                    'freedom-wall.php'
+                    'freedom-wall.php#post-' . $postId
                 ]);
             } catch (Throwable $exception) {
-                // A notification failure should not undo a successful like.
+                // Keep the like even if notification creation fails.
                 error_log(
                     'Like notification error: ' . $exception->getMessage()
                 );
@@ -86,11 +86,22 @@ try {
              WHERE post_id = ? AND user_id = ?'
         );
         $stmt->execute([$postId, $userId]);
+
+    } else {
+        header('Location: freedom-wall.php#post-' . $postId);
+        exit;
     }
 
 } catch (Throwable $exception) {
     error_log('Post action error: ' . $exception->getMessage());
 }
 
-header('Location: ' . $redirect);
+// Return to the relevant post on the Freedom Wall.
+if ($redirect === 'freedom-wall.php') {
+    header('Location: freedom-wall.php#post-' . $postId);
+} else {
+    header('Location: ' . $redirect);
+}
+
 exit;
+```
