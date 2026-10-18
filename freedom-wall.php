@@ -1,3 +1,4 @@
+
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
@@ -28,7 +29,7 @@ if (
 
     if (!in_array($category, $categories, true)) {
         $error = 'Please select a valid category.';
-    } elseif ($content === '' || mb_strlen($content) > 1000) {
+    } elseif ($content === '' || mb_strlen($content, 'UTF-8') > 1000) {
         $error = 'Your post must contain 1–1,000 characters.';
     } else {
         $stmt = $pdo->prepare(
@@ -44,7 +45,9 @@ if (
             $anonymous
         ]);
 
-        header('Location: freedom-wall.php?submitted=1');
+        $newPostId = (int) $pdo->lastInsertId();
+
+        header('Location: freedom-wall.php#post-' . $newPostId);
         exit;
     }
 }
@@ -119,22 +122,16 @@ function renderComments(
         $commentId = (int) $comment['id'];
         $commentUserId = (int) $comment['user_id'];
 
-        echo '<div class="fw-comment" style="margin-left:'
+        echo '<div class="fw-comment" id="comment-'
+            . $commentId . '" style="margin-left:'
             . ($depth * 14) . 'px">';
 
         echo '<div class="fw-comment-meta">';
-
-        echo '<strong>'
-            . e($comment['username'] ?? 'Member')
-            . '</strong>';
-
-        echo '<span>'
-            . e(date(
-                'M j, Y · g:i A',
-                strtotime($comment['created_at'])
-            ))
-            . '</span>';
-
+        echo '<strong>' . e($comment['username'] ?? 'Member') . '</strong>';
+        echo '<span>' . e(date(
+            'M j, Y · g:i A',
+            strtotime($comment['created_at'])
+        )) . '</span>';
         echo '</div>';
 
         echo '<p>' . nl2br(e($comment['content'])) . '</p>';
@@ -149,7 +146,8 @@ function renderComments(
             echo '<input type="hidden" name="action" value="add">';
             echo '<input type="hidden" name="post_id" value="' . $postId . '">';
             echo '<input type="hidden" name="parent_id" value="' . $commentId . '">';
-            echo '<input type="hidden" name="redirect" value="freedom-wall.php">';
+            echo '<input type="hidden" name="redirect" value="freedom-wall.php#post-'
+                . $postId . '">';
 
             echo '<input name="content" maxlength="1000" '
                 . 'placeholder="Write a reply..." required>';
@@ -168,13 +166,13 @@ function renderComments(
 
             echo '<input type="hidden" name="action" value="delete">';
             echo '<input type="hidden" name="comment_id" value="' . $commentId . '">';
-            echo '<input type="hidden" name="redirect" value="freedom-wall.php">';
+            echo '<input type="hidden" name="redirect" value="freedom-wall.php#post-'
+                . $postId . '">';
 
             echo '<button type="submit" class="fw-delete-btn">Delete</button>';
             echo '</form>';
         }
 
-        // DISPLAY NESTED REPLIES
         renderComments(
             $pdo,
             $postId,
@@ -202,100 +200,40 @@ include __DIR__ . '/includes/header.php';
 .freedom-wall .fw-container { max-width: 1250px; width: 100%; margin: 0 auto; }
 .freedom-wall .fw-hero { text-align: center; padding: 45px 20px; margin-bottom: 35px; }
 .freedom-wall .fw-symbol { display: block; color: #c77b98; font-size: 21px; margin-bottom: 18px; }
-.freedom-wall .fw-eyebrow, .freedom-wall .fw-kicker {
-    color: #a45a76; font-size: 11px; font-weight: 700;
-    letter-spacing: 2.5px; margin: 0 0 12px;
-}
-.freedom-wall .fw-hero h1 {
-    color: #7f203c; font-family: "Playfair Display", Georgia, serif;
-    font-size: clamp(34px, 5vw, 58px); font-weight: 500;
-    line-height: 1.2; margin: 12px 0 18px;
-}
+.freedom-wall .fw-eyebrow, .freedom-wall .fw-kicker { color: #a45a76; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; margin: 0 0 12px; }
+.freedom-wall .fw-hero h1 { color: #7f203c; font-family: "Playfair Display", Georgia, serif; font-size: clamp(34px, 5vw, 58px); font-weight: 500; line-height: 1.2; margin: 12px 0 18px; }
 .freedom-wall .fw-hero h1 span { color: #c72c50; font-style: italic; }
 .freedom-wall .fw-intro { max-width: 600px; margin: 0 auto; color: #906b7b; font-size: 15px; line-height: 1.9; }
-.freedom-wall .fw-divider {
-    display: flex; justify-content: center; align-items: center;
-    gap: 15px; margin-top: 28px; color: #b96b87;
-    font-size: 10px; letter-spacing: 2px;
-}
-.freedom-wall .fw-layout {
-    display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.4fr);
-    align-items: start; gap: 28px;
-}
+.freedom-wall .fw-divider { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 28px; color: #b96b87; font-size: 10px; letter-spacing: 2px; }
+.freedom-wall .fw-layout { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.4fr); align-items: start; gap: 28px; }
 .freedom-wall .fw-compose-column, .freedom-wall .fw-community { min-width: 0; }
 .freedom-wall .fw-compose-column { display: flex; flex-direction: column; gap: 20px; }
-.freedom-wall .fw-card, .freedom-wall .fw-post, .freedom-wall .fw-empty,
-.freedom-wall .fw-community {
-    background: rgba(255,255,255,.96); border: 1px solid #efd0db;
-    border-radius: 22px; box-shadow: 0 12px 35px rgba(127,32,60,.075);
-}
+.freedom-wall .fw-card, .freedom-wall .fw-post, .freedom-wall .fw-empty, .freedom-wall .fw-community { background: rgba(255,255,255,.96); border: 1px solid #efd0db; border-radius: 22px; box-shadow: 0 12px 35px rgba(127,32,60,.075); }
 .freedom-wall .fw-card { padding: 28px; }
 .freedom-wall .fw-card-heading { display: flex; align-items: center; gap: 14px; }
-.freedom-wall .fw-mini-symbol {
-    display: grid; place-items: center; flex-shrink: 0;
-    width: 48px; height: 48px; border-radius: 16px;
-    background: #fff0f4; color: #bd5276; font-size: 24px;
-}
-.freedom-wall .fw-card-heading h2, .freedom-wall .fw-community-heading h2 {
-    margin: 0; color: #7f203c; font-family: "Playfair Display", Georgia, serif;
-    font-size: 25px; font-weight: 500;
-}
-.freedom-wall .fw-description, .freedom-wall .fw-community-intro {
-    color: #987888; font-size: 13px; line-height: 1.8; margin: 16px 0 24px;
-}
+.freedom-wall .fw-mini-symbol { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border-radius: 16px; background: #fff0f4; color: #bd5276; font-size: 24px; }
+.freedom-wall .fw-card-heading h2, .freedom-wall .fw-community-heading h2 { margin: 0; color: #7f203c; font-family: "Playfair Display", Georgia, serif; font-size: 25px; font-weight: 500; }
+.freedom-wall .fw-description, .freedom-wall .fw-community-intro { color: #987888; font-size: 13px; line-height: 1.8; margin: 16px 0 24px; }
 .freedom-wall .fw-field { margin: 22px 0; }
-.freedom-wall .fw-field label {
-    display: block; color: #85415c; font-size: 10px;
-    font-weight: 700; letter-spacing: 1.2px; margin-bottom: 10px;
-}
+.freedom-wall .fw-field label { display: block; color: #85415c; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; margin-bottom: 10px; }
 .freedom-wall .fw-field label span { color: #c72c50; }
-.freedom-wall .fw-field select, .freedom-wall .fw-field textarea,
-.freedom-wall .fw-comment-form input, .freedom-wall .fw-reply-form input {
-    box-sizing: border-box; width: 100%; min-width: 0;
-    border: 1px solid #ebcbd7; border-radius: 12px;
-    background: #fff9fb; color: #654352; padding: 13px 14px;
-    font: inherit; font-size: 13px; outline: none;
-    transition: border-color .2s, box-shadow .2s;
-}
-.freedom-wall .fw-field select:focus, .freedom-wall .fw-field textarea:focus,
-.freedom-wall .fw-comment-form input:focus, .freedom-wall .fw-reply-form input:focus {
-    border-color: #c77b98; box-shadow: 0 0 0 3px rgba(199,123,152,.13);
-}
+.freedom-wall .fw-field select, .freedom-wall .fw-field textarea, .freedom-wall .fw-comment-form input, .freedom-wall .fw-reply-form input { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid #ebcbd7; border-radius: 12px; background: #fff9fb; color: #654352; padding: 13px 14px; font: inherit; font-size: 13px; outline: none; transition: border-color .2s, box-shadow .2s; }
+.freedom-wall .fw-field select:focus, .freedom-wall .fw-field textarea:focus, .freedom-wall .fw-comment-form input:focus, .freedom-wall .fw-reply-form input:focus { border-color: #c77b98; box-shadow: 0 0 0 3px rgba(199,123,152,.13); }
 .freedom-wall .fw-field textarea { min-height: 150px; resize: vertical; line-height: 1.8; }
-.freedom-wall .fw-field textarea::placeholder, .freedom-wall .fw-comment-form input::placeholder,
-.freedom-wall .fw-reply-form input::placeholder { color: #bd9eac; }
-.freedom-wall .fw-character-note {
-    display: flex; justify-content: space-between; flex-wrap: wrap;
-    gap: 8px; margin-top: 9px; color: #ad8798; font-size: 10px;
-}
+.freedom-wall .fw-field textarea::placeholder, .freedom-wall .fw-comment-form input::placeholder, .freedom-wall .fw-reply-form input::placeholder { color: #bd9eac; }
+.freedom-wall .fw-character-note { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 9px; color: #ad8798; font-size: 10px; }
 .freedom-wall .fw-checkbox { display: flex; align-items: center; gap: 10px; color: #80566a; font-size: 12px; cursor: pointer; }
 .freedom-wall .fw-checkbox input { accent-color: #b53c60; width: 16px; height: 16px; }
-.freedom-wall .fw-notice {
-    display: flex; gap: 12px; padding: 14px; margin: 20px 0;
-    background: #fff0f4; border: 1px solid #f2d5df; border-radius: 13px;
-}
+.freedom-wall .fw-notice { display: flex; gap: 12px; padding: 14px; margin: 20px 0; background: #fff0f4; border: 1px solid #f2d5df; border-radius: 13px; }
 .freedom-wall .fw-notice-symbol { color: #bd5276; font-size: 18px; }
 .freedom-wall .fw-notice p { margin: 0; color: #936b7d; font-size: 11px; line-height: 1.8; }
-.freedom-wall .fw-submit, .freedom-wall .fw-button {
-    display: inline-flex; justify-content: center; align-items: center; gap: 12px;
-    border: 1px solid transparent; border-radius: 12px;
-    background: linear-gradient(135deg, #c72c50, #8b2345);
-    color: #fff; font-weight: 600; cursor: pointer; text-decoration: none;
-    transition: transform .2s, box-shadow .2s, background .2s;
-}
+.freedom-wall .fw-submit, .freedom-wall .fw-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; border: 1px solid transparent; border-radius: 12px; background: linear-gradient(135deg, #c72c50, #8b2345); color: #fff; font-weight: 600; cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
 .freedom-wall .fw-submit { width: 100%; padding: 15px 18px; margin-top: 20px; font-size: 13px; }
 .freedom-wall .fw-button { padding: 11px 17px; font-size: 12px; flex-shrink: 0; }
-.freedom-wall .fw-submit:hover, .freedom-wall .fw-button:hover {
-    transform: translateY(-2px); box-shadow: 0 8px 20px rgba(127,32,60,.2);
-    background: linear-gradient(135deg, #a51d3d, #791c38); color: #fff;
-}
+.freedom-wall .fw-submit:hover, .freedom-wall .fw-button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(127,32,60,.2); background: linear-gradient(135deg, #a51d3d, #791c38); color: #fff; }
 .freedom-wall .fw-button-symbol { font-size: 17px; }
 .freedom-wall .fw-bottom-note { text-align: center; color: #b08a9b; font-size: 10px; margin: 17px 0 0; }
-.freedom-wall .fw-side-note {
-    position: relative; overflow: hidden; padding: 25px; margin-top: 0;
-    border: 1px solid #efd0db; border-radius: 20px;
-    background: linear-gradient(135deg, #fbe3eb, #fff6f8);
-}
+.freedom-wall .fw-side-note { position: relative; overflow: hidden; padding: 25px; margin-top: 0; border: 1px solid #efd0db; border-radius: 20px; background: linear-gradient(135deg, #fbe3eb, #fff6f8); }
 .freedom-wall .fw-side-quote { color: #c77b98; font-family: Georgia, serif; font-size: 55px; line-height: .8; }
 .freedom-wall .fw-side-note p { color: #7f203c; font-family: "Playfair Display", Georgia, serif; font-size: 20px; line-height: 1.6; }
 .freedom-wall .fw-side-caption { color: #a45a76; font-size: 9px; letter-spacing: 1.5px; }
@@ -304,41 +242,31 @@ include __DIR__ . '/includes/header.php';
 .freedom-wall .fw-community-heading { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
 .freedom-wall .fw-community-heading h2 { font-size: 32px; }
 .freedom-wall .fw-community-heading h2 span { color: #c72c50; }
-.freedom-wall .fw-wall-symbol {
-    display: grid; place-items: center; width: 48px; height: 48px;
-    flex-shrink: 0; border-radius: 50%; background: #f9dfe7;
-    color: #b53c60; font-size: 24px;
-}
+.freedom-wall .fw-wall-symbol { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: #f9dfe7; color: #b53c60; font-size: 24px; }
 .freedom-wall .fw-community-intro { margin-top: 10px; }
 .freedom-wall .fw-post-list { display: grid; gap: 20px; }
-.freedom-wall .fw-post { padding: 24px; min-width: 0; transition: transform .2s, box-shadow .2s; }
+.freedom-wall .fw-post { padding: 24px; min-width: 0; scroll-margin-top: 100px; transition: transform .2s, box-shadow .2s; }
+.freedom-wall .fw-post:target { border-color: #c77b98; box-shadow: 0 0 0 4px rgba(199,123,152,.2), 0 12px 35px rgba(127,32,60,.1); }
 .freedom-wall .fw-post:hover { transform: translateY(-2px); box-shadow: 0 16px 35px rgba(127,32,60,.11); }
 .freedom-wall .fw-post-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
 .freedom-wall .fw-post-category { padding: 7px 12px; border-radius: 30px; background: #fff0f4; color: #a13f61; font-size: 10px; font-weight: 700; }
 .freedom-wall .fw-post-top time { color: #ae8b9b; font-size: 10px; }
 .freedom-wall .fw-author { display: flex; align-items: center; gap: 12px; }
-.freedom-wall .fw-avatar {
-    display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px;
-    border-radius: 50%; background: linear-gradient(135deg, #f8d5e1, #fcebf1);
-    color: #a6385c; font-size: 21px;
-}
+.freedom-wall .fw-avatar { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #f8d5e1, #fcebf1); color: #a6385c; font-size: 21px; }
 .freedom-wall .fw-author strong { display: block; color: #7f203c; font-size: 13px; }
 .freedom-wall .fw-author small { display: block; color: #ad8999; font-size: 10px; margin-top: 4px; }
 .freedom-wall .fw-post-content { margin: 22px 0; color: #654352; font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; white-space: normal; }
 .freedom-wall .fw-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 15px 0; border-top: 1px solid #f3dfe6; border-bottom: 1px solid #f3dfe6; }
 .freedom-wall .fw-actions form { margin: 0; }
-.freedom-wall .fw-action-btn, .freedom-wall .fw-action-static {
-    display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
-    border: 1px solid #efd0db; border-radius: 25px; background: #fff9fb;
-    color: #9c4d6a; font-size: 11px; text-decoration: none;
-}
+.freedom-wall .fw-action-btn, .freedom-wall .fw-action-static { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid #efd0db; border-radius: 25px; background: #fff9fb; color: #9c4d6a; font-size: 11px; text-decoration: none; }
 .freedom-wall .fw-action-btn { cursor: pointer; }
 .freedom-wall .fw-action-btn:hover, .freedom-wall .fw-action-btn.is-liked { background: #fbe3eb; border-color: #e4a6bb; color: #a3284e; }
 .freedom-wall .fw-action-btn span { font-weight: 700; }
 .freedom-wall .fw-comments { margin-top: 22px; }
 .freedom-wall .fw-comments h3 { color: #7f203c; font-family: "Playfair Display", Georgia, serif; font-size: 19px; font-weight: 500; margin: 0 0 18px; }
 .freedom-wall .fw-comments h3 span { color: #c72c50; }
-.freedom-wall .fw-comment { padding: 13px 14px; margin: 12px 0; border-left: 2px solid #e7b2c4; border-radius: 0 12px 12px 0; background: #fff7fa; overflow-wrap: anywhere; }
+.freedom-wall .fw-comment { padding: 13px 14px; margin: 12px 0; border-left: 2px solid #e7b2c4; border-radius: 0 12px 12px 0; background: #fff7fa; overflow-wrap: anywhere; scroll-margin-top: 100px; }
+.freedom-wall .fw-comment:target { background: #ffe8ef; border-left-color: #b63259; }
 .freedom-wall .fw-comment-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .freedom-wall .fw-comment-meta strong { color: #8d3655; font-size: 11px; }
 .freedom-wall .fw-comment-meta span { color: #b08a9b; font-size: 10px; }
@@ -371,7 +299,6 @@ include __DIR__ . '/includes/header.php';
     .freedom-wall .fw-community { order: 2; }
     .freedom-wall .fw-hero { padding: 25px 10px; }
 }
-
 @media (max-width: 520px) {
     .freedom-wall { padding: 25px 12px 40px; }
     .freedom-wall .fw-container { width: 100%; }
@@ -389,7 +316,6 @@ include __DIR__ . '/includes/header.php';
 
 <section class="section freedom-wall">
     <div class="container fw-container">
-
         <header class="fw-hero">
             <span class="fw-symbol">୨୧ ── ♡ ── ୨୧</span>
             <p class="fw-eyebrow">A LITTLE CORNER OF THE INTERNET</p>
@@ -430,9 +356,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
 
-                    <p class="fw-description">
-                        No perfect words needed. Start wherever you are.
-                    </p>
+                    <p class="fw-description">No perfect words needed. Start wherever you are.</p>
 
                     <form method="post" action="freedom-wall.php">
                         <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
@@ -506,16 +430,13 @@ include __DIR__ . '/includes/header.php';
                         <div class="fw-empty">
                             <span class="fw-empty-symbol">୨୧</span>
                             <h3>A blank page, for now.</h3>
-                            <p>
-                                No thoughts have been shared publicly yet.
-                                Maybe your words will be the first to bloom.
-                            </p>
+                            <p>No thoughts have been shared publicly yet. Maybe your words will be the first to bloom.</p>
                             <span class="fw-empty-decoration">˚₊‧♡‧₊˚</span>
                         </div>
                     <?php endif; ?>
 
                     <?php foreach ($posts as $post): ?>
-                        <article class="fw-post">
+                        <article class="fw-post" id="post-<?= (int) $post['id'] ?>">
                             <div class="fw-post-top">
                                 <span class="fw-post-category">♡ <?= e($post['category']) ?></span>
                                 <time datetime="<?= e(date('c', strtotime($post['created_at']))) ?>">
@@ -529,9 +450,7 @@ include __DIR__ . '/includes/header.php';
                                 </span>
                                 <div>
                                     <strong>
-                                        <?= (int) $post['is_anonymous'] === 1
-                                            ? 'Anonymous'
-                                            : 'Community member' ?>
+                                        <?= (int) $post['is_anonymous'] === 1 ? 'Anonymous' : 'Community member' ?>
                                     </strong>
                                     <small>A thought shared with the community</small>
                                 </div>
@@ -543,7 +462,7 @@ include __DIR__ . '/includes/header.php';
                                 <form method="post" action="post-action.php">
                                     <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
                                     <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
-                                    <input type="hidden" name="redirect" value="freedom-wall.php">
+                                    <input type="hidden" name="redirect" value="freedom-wall.php#post-<?= (int) $post['id'] ?>">
                                     <input type="hidden" name="action" value="<?= (int) $post['liked'] ? 'unlike' : 'like' ?>">
 
                                     <button class="fw-action-btn <?= (int) $post['liked'] ? 'is-liked' : '' ?>" type="submit">
@@ -552,12 +471,12 @@ include __DIR__ . '/includes/header.php';
                                     </button>
                                 </form>
 
-                                <span class="fw-action-static">
+                                <a class="fw-action-static" href="#comments-<?= (int) $post['id'] ?>">
                                     ♡ <?= (int) $post['comment_count'] ?> comments
-                                </span>
+                                </a>
                             </div>
 
-                            <div class="fw-comments">
+                            <div class="fw-comments" id="comments-<?= (int) $post['id'] ?>">
                                 <h3>Conversation <span>♡</span></h3>
 
                                 <?php renderComments($pdo, (int) $post['id'], $userId); ?>
@@ -566,7 +485,7 @@ include __DIR__ . '/includes/header.php';
                                     <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
                                     <input type="hidden" name="action" value="add">
                                     <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
-                                    <input type="hidden" name="redirect" value="freedom-wall.php">
+                                    <input type="hidden" name="redirect" value="freedom-wall.php#post-<?= (int) $post['id'] ?>">
                                     <input name="content" maxlength="1000" placeholder="Leave a kind comment..." required>
                                     <button type="submit" class="fw-button">Comment</button>
                                 </form>
