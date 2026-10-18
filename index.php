@@ -3,7 +3,6 @@
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 
-// Get a motivational quote if the quotes table exists.
 $quote = 'You do not have to solve everything today. Take one step at a time.';
 
 try {
@@ -14,10 +13,17 @@ try {
         $quote = $result['quote'];
     }
 } catch (PDOException $e) {
-    // Keep the default quote if the table is unavailable.
+    // Use the default quote if the quotes table is unavailable.
 }
 
 $isLoggedIn = isset($_SESSION['user_id']);
+
+// Build the CSS URL relative to this PHP file.
+$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+if ($basePath === '.' || $basePath === '/') {
+    $basePath = '';
+}
+$cssPath = $basePath . '/assets/css/style.css';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,8 +36,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Correct CSS path -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($cssPath, ENT_QUOTES, 'UTF-8') ?>">
 
     <style>
         :root {
@@ -65,7 +70,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
             text-decoration: none;
         }
 
-        button, a {
+        button,
+        a {
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -105,9 +111,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
             align-items: center;
             justify-content: flex-end;
             flex-wrap: wrap;
-            gap: 22px;
-            font-size: 13px;
+            gap: 16px;
+            font-size: 12px;
             color: var(--muted);
+        }
+
+        .mc-links a {
+            transition: color .2s ease;
         }
 
         .mc-links a:hover {
@@ -187,6 +197,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
             font-size: 13px;
             font-weight: 700;
             transition: .2s ease;
+            cursor: pointer;
         }
 
         .mc-button-primary {
@@ -202,7 +213,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
         .mc-button-secondary {
             color: var(--wine);
-            background: rgba(255,255,255,.45);
+            background: rgba(255, 255, 255, .45);
         }
 
         .mc-button-secondary:hover {
@@ -213,7 +224,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
             width: min(280px, 100%);
             aspect-ratio: 1;
             margin: auto;
-            border: 1px solid rgba(199,46,80,.25);
+            border: 1px solid rgba(199, 46, 80, .25);
             border-radius: 50%;
             display: grid;
             place-items: center;
@@ -224,7 +235,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
         .mc-orbit::after {
             content: "";
             position: absolute;
-            border: 1px solid rgba(199,46,80,.22);
+            border: 1px solid rgba(199, 46, 80, .22);
             border-radius: 50%;
         }
 
@@ -249,7 +260,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
             align-items: center;
             justify-content: center;
             text-align: center;
-            box-shadow: 0 18px 45px rgba(118,32,57,.16);
+            box-shadow: 0 18px 45px rgba(118, 32, 57, .16);
         }
 
         .mc-orbit-center strong {
@@ -314,7 +325,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
         .mc-feature:hover {
             transform: translateY(-5px);
             border-color: #d99aaa;
-            box-shadow: 0 16px 35px rgba(118,32,57,.07);
+            box-shadow: 0 16px 35px rgba(118, 32, 57, .07);
         }
 
         .mc-feature-number {
@@ -400,7 +411,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
             font-size: 12px;
         }
 
-        @media (max-width: 850px) {
+        @media (max-width: 1000px) {
             .mc-nav {
                 padding: 18px 0;
                 align-items: flex-start;
@@ -409,9 +420,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
             .mc-links {
                 justify-content: flex-start;
-                gap: 15px;
             }
+        }
 
+        @media (max-width: 850px) {
             .mc-hero {
                 grid-template-columns: 1fr;
                 padding: 45px 7%;
@@ -454,6 +466,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
             .mc-section {
                 margin-bottom: 55px;
             }
+
+            .mc-bottom h2 {
+                font-size: 30px;
+            }
         }
     </style>
 </head>
@@ -469,19 +485,20 @@ $isLoggedIn = isset($_SESSION['user_id']);
             <a href="freedom-wall.php">Freedom Wall</a>
             <a href="mood-daily.php">Mood Tracker</a>
             <a href="task-planner.php">Task Planner</a>
+            <a href="motivation.php">Motivation</a>
             <a href="calm-corner.php">Calm Corner</a>
+            <a href="support.php">Support</a>
+            <a href="search-user.php">Search People</a>
+            <a href="messages.php">Messages</a>
+            <a href="create-post.php">Create a Post</a>
+            <a href="search-user.php">Search People</a>
+            <a href="profile.php">Your Profile</a>
 
             <?php if ($isLoggedIn): ?>
-                <form action="logout.php" method="POST" style="margin:0;">
-                    <?php if (function_exists('csrfToken')): ?>
-                        <input type="hidden" name="csrf_token"
-                               value="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                    <?php endif; ?>
-                    <button type="submit" class="mc-button mc-login"
-                            style="cursor:pointer;">Log out</button>
-                </form>
+                <a class="mc-login" href="logout.php">Log out</a>
             <?php else: ?>
                 <a class="mc-login" href="login.php">Log in</a>
+                <a href="register.php">Register</a>
             <?php endif; ?>
         </div>
     </nav>
@@ -597,7 +614,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <section class="mc-quote">
         <small>A gentle reminder</small>
         <blockquote>
-            “<?= htmlspecialchars($quote, ENT_QUOTES, 'UTF-8') ?>”
+            &ldquo;<?= htmlspecialchars($quote, ENT_QUOTES, 'UTF-8') ?>&rdquo;
         </blockquote>
     </section>
 
@@ -624,6 +641,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <p>Mind Capsule &middot; A gentle reminder to take care of yourself.</p>
     <p>Made for reflection, encouragement, and connection.</p>
 </footer>
+
+<script src="<?= htmlspecialchars($basePath . '/assets/js/script.js', ENT_QUOTES, 'UTF-8') ?>" defer></script>
 
 </body>
 </html>
