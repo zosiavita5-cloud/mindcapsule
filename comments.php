@@ -1,4 +1,4 @@
-
+```php
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
@@ -14,11 +14,6 @@ verifyCsrf();
 
 $userId = (int) $_SESSION['user_id'];
 $action = $_POST['action'] ?? '';
-$redirect = $_POST['redirect'] ?? 'freedom-wall.php';
-
-if (!in_array($redirect, ['freedom-wall.php', 'profile.php'], true)) {
-    $redirect = 'freedom-wall.php';
-}
 
 /**
  * Save a notification without allowing notification errors
@@ -30,7 +25,8 @@ function createCommentNotification(
     int $actorId,
     string $type,
     string $title,
-    string $message
+    string $message,
+    string $link
 ): void {
     if ($recipientId <= 0 || $recipientId === $actorId) {
         return;
@@ -50,10 +46,10 @@ function createCommentNotification(
             $type,
             $title,
             $message,
-            'freedom-wall.php'
+            $link
         ]);
     } catch (Throwable $exception) {
-        // Keep the comment working even if notification insertion fails.
+        // A notification error must not undo a saved comment.
         error_log('Comment notification error: ' . $exception->getMessage());
     }
 }
@@ -61,10 +57,12 @@ function createCommentNotification(
 try {
     if ($action === 'add') {
         $postId = filter_input(INPUT_POST, 'post_id', FILTER_VALIDATE_INT);
+
         $parentRaw = $_POST['parent_id'] ?? '';
         $parentId = $parentRaw === ''
             ? null
             : filter_var($parentRaw, FILTER_VALIDATE_INT);
+
         $content = trim((string) ($_POST['content'] ?? ''));
 
         if (
@@ -73,11 +71,11 @@ try {
             $content === '' ||
             mb_strlen($content) > 1000
         ) {
-            header('Location: ' . $redirect . '?error=comment');
+            header('Location: freedom-wall.php?error=comment');
             exit;
         }
 
-        // Find the approved post and its owner.
+        // Verify that the post exists and is approved.
         $stmt = $pdo->prepare(
             "SELECT id, user_id
              FROM posts
@@ -87,17 +85,17 @@ try {
         $post = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$post) {
-            header('Location: ' . $redirect);
+            header('Location: freedom-wall.php');
             exit;
         }
 
         $postOwnerId = (int) $post['user_id'];
         $parentOwnerId = null;
 
-        // If this is a reply, confirm the parent comment belongs to this post.
+        // If replying, verify the parent comment belongs to this post.
         if ($parentId !== null) {
             if (!is_int($parentId) || $parentId < 1) {
-                header('Location: ' . $redirect);
+                header('Location: freedom-wall.php#post-' . $postId);
                 exit;
             }
 
@@ -110,14 +108,14 @@ try {
             $parentComment = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$parentComment) {
-                header('Location: ' . $redirect);
+                header('Location: freedom-wall.php#post-' . $postId);
                 exit;
             }
 
             $parentOwnerId = (int) $parentComment['user_id'];
         }
 
-        // Save the comment first.
+        // Save the comment.
         $stmt = $pdo->prepare(
             'INSERT INTO post_comments
                 (post_id, user_id, parent_id, content)
@@ -125,27 +123,39 @@ try {
         );
         $stmt->execute([$postId, $userId, $parentId, $content]);
 
-        // Notify the post owner for a top-level comment.
+        $newCommentId = (int) $pdo->lastInsertId();
+
         if ($parentId === null) {
+            // Notify the post owner about a new top-level comment.
             createCommentNotification(
                 $pdo,
                 $postOwnerId,
                 $userId,
                 'comment',
                 'New comment',
-                'Someone commented on your post.'
+                'Someone commented on your post.',
+                'freedom-wall.php#post-' . $postId
             );
         } else {
-            // Notify the author of the comment being replied to.
+            // Notify the parent comment author about a reply.
             createCommentNotification(
                 $pdo,
                 (int) $parentOwnerId,
                 $userId,
                 'reply',
                 'New reply',
-                'Someone replied to your comment.'
+                'Someone replied to your comment.',
+                'freedom-wall.php#comment-' . $newCommentId
             );
         }
+
+        // Return to the relevant post or newly created comment.
+        if ($parentId !== null && $newCommentId > 0) {
+            header('Location: freedom-wall.php#comment-' . $newCommentId);
+        } else {
+            header('Location: freedom-wall.php#post-' . $postId);
+        }
+        exit;
 
     } elseif ($action === 'delete') {
         $commentId = filter_input(
@@ -154,51 +164,71 @@ try {
             FILTER_VALIDATE_INT
         );
 
-        if ($commentId && $commentId > 0) {
-            $pdo->beginTransaction();
-
-            $stmt = $pdo->prepare(
-                'SELECT id
-                 FROM post_comments
-                 WHERE id = ? AND user_id = ?'
-            );
-            $stmt->execute([$commentId, $userId]);
-
-            if ($stmt->fetch()) {
-                // Delete all descendants before deleting the selected comment.
-                $pending = [$commentId];
-
-                while ($pending) {
-                    $current = array_pop($pending);
-
-                    $stmt = $pdo->prepare(
-                        'SELECT id
-                         FROM post_comments
-                         WHERE parent_id = ?'
-                    );
-                    $stmt->execute([$current]);
-
-                    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $childId) {
-                        $pending[] = (int) $childId;
-                    }
-
-                    $stmt = $pdo->prepare(
-                        'DELETE FROM post_comments WHERE id = ?'
-                    );
-                    $stmt->execute([$current]);
-                }
-            }
-
-            $pdo->commit();
+        if (!$commentId || $commentId < 1) {
+            header('Location: freedom-wall.php');
+            exit;
         }
+
+        $pdo->beginTransaction();
+
+        // Get the post ID before deleting, for the return link.
+        $stmt = $pdo->prepare(
+            'SELECT id, post_id
+             FROM post_comments
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$commentId, $userId]);
+        $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $postId = $comment ? (int) $comment['post_id'] : 0;
+
+        if ($comment) {
+            // Delete descendants before deleting the selected comment.
+            $pending = [$commentId];
+
+            while (!empty($pending)) {
+                $current = array_pop($pending);
+
+                $stmt = $pdo->prepare(
+                    'SELECT id
+                     FROM post_comments
+                     WHERE parent_id = ?'
+                );
+                $stmt->execute([$current]);
+
+                foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $childId) {
+                    $pending[] = (int) $childId;
+                }
+
+                $stmt = $pdo->prepare(
+                    'DELETE FROM post_comments WHERE id = ?'
+                );
+                $stmt->execute([$current]);
+            }
+        }
+
+        $pdo->commit();
+
+        if ($postId > 0) {
+            header('Location: freedom-wall.php#post-' . $postId);
+        } else {
+            header('Location: freedom-wall.php');
+        }
+        exit;
+
+    } else {
+        header('Location: freedom-wall.php');
+        exit;
     }
+
 } catch (Throwable $exception) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
     error_log('Comments error: ' . $exception->getMessage());
-}
 
-header('Location: ' . $redirect);
-exit;
+    header('Location: freedom-wall.php?error=comment');
+    exit;
+}
+```
