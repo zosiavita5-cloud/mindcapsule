@@ -16,11 +16,7 @@ $isOwner = ($profileId === $currentUserId);
 $error = '';
 $success = '';
 
-/*
-|--------------------------------------------------------------------------
-| Update profile
-|--------------------------------------------------------------------------
-*/
+/* UPDATE PROFILE */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
 
@@ -56,11 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Get profile information
-|--------------------------------------------------------------------------
-*/
+/* GET PROFILE INFORMATION */
 $stmt = $pdo->prepare(
     "SELECT
         u.id,
@@ -89,13 +81,7 @@ if ($displayName === '') {
 
 $bio = (string) ($profile['bio'] ?? '');
 
-/*
-|--------------------------------------------------------------------------
-| Get all published posts belonging to this profile
-|--------------------------------------------------------------------------
-| Anonymous posts remain visible to their owner on their own profile.
-| Other visitors see the anonymous label, not the author's identity.
-*/
+/* GET PUBLISHED POSTS */
 $stmt = $pdo->prepare(
     "SELECT
         id,
@@ -121,6 +107,495 @@ $pageTitle = $displayName . ' | Profile';
 
 include __DIR__ . '/includes/header.php';
 ?>
+
+<style>
+/* =====================================
+   PROFILE PAGE - FREEDOM WALL DESIGN
+===================================== */
+
+.profile-container {
+    width: calc(100% - 40px);
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px 0 55px;
+    color: #393631;
+}
+
+.profile-container * {
+    box-sizing: border-box;
+}
+
+.profile-container .fw-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    color: #916b7c;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color .2s ease;
+}
+
+.profile-container .fw-back:hover {
+    color: #bd829b;
+}
+
+/* PROFILE HERO */
+
+.profile-hero {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 30px;
+    padding: 46px 25px 38px;
+    border: 1px solid #eee3e8;
+    border-radius: 26px;
+    background:
+        radial-gradient(
+            ellipse at top left,
+            #f9e9f0 0%,
+            transparent 55%
+        ),
+        radial-gradient(
+            ellipse at bottom right,
+            #edf4e7 0%,
+            transparent 55%
+        ),
+        #fffdfb;
+    text-align: center;
+    box-shadow: 0 10px 32px rgba(80, 57, 68, .06);
+}
+
+.profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+    border: 5px solid #fff;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8cbd8, #dce9d3);
+    color: #775668;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 40px;
+    box-shadow: 0 5px 20px rgba(100, 70, 85, .12);
+}
+
+.profile-container .fw-eyebrow,
+.profile-container .fw-section-label {
+    color: #a4778b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.profile-hero h1 {
+    margin: 12px 0 6px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(32px, 5vw, 46px);
+    font-weight: 500;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.profile-container .fw-period {
+    color: #c28ca3;
+}
+
+.profile-username {
+    margin: 8px 0 18px;
+    color: #91868b;
+    font-size: 14px;
+}
+
+.profile-bio {
+    max-width: 580px;
+    margin: 0 auto 22px;
+    color: #69615f;
+    font-size: 15px;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+}
+
+.profile-stats {
+    margin: 0 0 22px;
+    color: #a4778b;
+    font-size: 13px;
+}
+
+/* BUTTONS */
+
+.profile-container .fw-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 12px 21px;
+    border: 1px solid #b9879b;
+    border-radius: 30px;
+    background: #a9798d;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.profile-container .fw-button:hover {
+    background: #906478;
+    box-shadow: 0 5px 14px rgba(144, 100, 120, .18);
+    transform: translateY(-1px);
+}
+
+.profile-container .profile-create-link {
+    margin-top: 2px;
+}
+
+/* NOTIFICATIONS */
+
+.profile-container .fw-notice,
+.profile-container .fw-error {
+    margin: 18px 0;
+    padding: 15px 18px;
+    border-radius: 13px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.profile-container .fw-notice {
+    border: 1px solid #dce8d6;
+    background: #f3f8ef;
+    color: #486847;
+}
+
+.profile-container .fw-error {
+    border: 1px solid #efd4d8;
+    background: #fff3f4;
+    color: #9b4654;
+}
+
+/* EDIT PROFILE */
+
+.profile-edit-section {
+    margin: 30px 0 40px;
+    padding: 30px;
+    border: 1px solid #eee4e7;
+    border-radius: 22px;
+    background: #fffdfb;
+    box-shadow: 0 8px 26px rgba(80, 57, 68, .045);
+}
+
+.profile-edit-section h2,
+.profile-posts-section h2 {
+    margin: 12px 0 22px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(25px, 4vw, 32px);
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.profile-edit-section h2 span {
+    color: #c28ca3;
+}
+
+.profile-edit-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.profile-edit-section label {
+    margin-top: 7px;
+    color: #62575c;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.profile-edit-section input,
+.profile-edit-section textarea {
+    width: 100%;
+    padding: 13px 15px;
+    border: 1px solid #e8dfe2;
+    border-radius: 12px;
+    outline: none;
+    background: #fff;
+    color: #393538;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.7;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.profile-edit-section textarea {
+    min-height: 115px;
+    resize: vertical;
+}
+
+.profile-edit-section input:focus,
+.profile-edit-section textarea:focus {
+    border-color: #c995aa;
+    box-shadow: 0 0 0 3px rgba(201, 149, 170, .15);
+}
+
+.profile-edit-section input::placeholder,
+.profile-edit-section textarea::placeholder {
+    color: #aaa0a4;
+}
+
+.profile-edit-section .fw-button {
+    align-self: flex-start;
+    margin-top: 10px;
+}
+
+/* POSTS SECTION */
+
+.profile-posts-section {
+    margin-top: 38px;
+}
+
+.profile-container .fw-feed-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.profile-container .fw-feed-heading h2 {
+    margin-bottom: 0;
+}
+
+.profile-container .fw-count {
+    flex-shrink: 0;
+    padding: 8px 13px;
+    border: 1px solid #eee1e6;
+    border-radius: 30px;
+    background: #fbf1f5;
+    color: #986d80;
+    font-size: 12px;
+}
+
+.profile-posts-intro {
+    margin: 12px 0 24px;
+    color: #85817c;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.profile-post-list {
+    display: grid;
+    gap: 20px;
+}
+
+/* INDIVIDUAL POST CARD */
+
+.profile-container .profile-post-card {
+    padding: 24px;
+    border: 1px solid #eee7e5;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 7px 24px rgba(70, 60, 55, .045);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.profile-container .profile-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(70, 60, 55, .075);
+}
+
+.profile-post-card .fw-post-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-post-card .fw-category {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 30px;
+    background: #f8edf1;
+    color: #986d80;
+    font-size: 12px;
+}
+
+.profile-post-card time {
+    color: #96918c;
+    font-size: 12px;
+}
+
+.profile-post-card .fw-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.profile-post-card .fw-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 43px;
+    height: 43px;
+    border-radius: 50%;
+    background: #f2e5e9;
+    color: #9b7182;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 19px;
+}
+
+.profile-post-card .fw-author strong {
+    display: block;
+    color: #3d3b38;
+    font-size: 14px;
+}
+
+.profile-post-card .fw-author small {
+    display: block;
+    margin-top: 4px;
+    color: #96918c;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.profile-post-card .fw-post-content {
+    margin: 0;
+    color: #514f4a;
+    font-size: 15px;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+}
+
+.profile-post-card .fw-post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid #f0ebea;
+    color: #a17e8d;
+    font-size: 12px;
+}
+
+.profile-post-card .fw-post-footer a {
+    color: #8d6879;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.profile-post-card .fw-post-footer a:hover {
+    text-decoration: underline;
+}
+
+/* EMPTY POSTS */
+
+.profile-container .fw-empty {
+    padding: 42px 24px;
+    border: 1px dashed #e7d6dd;
+    border-radius: 22px;
+    background: #fffafc;
+    text-align: center;
+}
+
+.profile-container .fw-empty-symbol {
+    display: block;
+    margin-bottom: 14px;
+    color: #bd849a;
+    font-size: 34px;
+}
+
+.profile-container .fw-empty h3 {
+    margin: 10px 0;
+    color: #4d4548;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.profile-container .fw-empty p {
+    max-width: 440px;
+    margin: 12px auto 22px;
+    color: #85817c;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+/* COMMUNITY FOOTER */
+
+.profile-container .fw-community-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 48px;
+    color: #9b8790;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13px;
+    text-align: center;
+}
+
+.profile-container .fw-community-footer span {
+    color: #bd849a;
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 600px) {
+    .profile-container {
+        width: calc(100% - 24px);
+        padding-top: 20px;
+    }
+
+    .profile-hero {
+        padding: 34px 18px 30px;
+        border-radius: 22px;
+    }
+
+    .profile-avatar {
+        width: 85px;
+        height: 85px;
+        font-size: 34px;
+    }
+
+    .profile-edit-section {
+        padding: 22px 17px;
+    }
+
+    .profile-container .profile-post-card {
+        padding: 19px 16px;
+    }
+
+    .profile-container .fw-feed-heading {
+        align-items: flex-start;
+    }
+
+    .profile-post-card .fw-post-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-post-card .fw-post-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-edit-section .fw-button {
+        width: 100%;
+    }
+}
+</style>
 
 <main class="fw-container profile-container">
 
@@ -270,8 +745,7 @@ include __DIR__ . '/includes/header.php';
                     <?php
                     $isAnonymous = (int) ($post['is_anonymous'] ?? 1) === 1;
 
-                    // Do not reveal the author's identity on anonymous posts
-                    // when another person views the profile.
+                    // Keep anonymous authors private to other visitors.
                     $showAnonymous = $isAnonymous && !$isOwner;
                     ?>
 
