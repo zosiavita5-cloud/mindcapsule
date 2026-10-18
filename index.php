@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
@@ -481,24 +480,14 @@ $cssPath = $basePath . '/assets/css/style.css';
         <a class="mc-brand" href="index.php">mind<span>.</span>capsule</a>
 
         <div class="mc-links">
-            <a href="index.php">Home</a>
             <a href="freedom-wall.php">Freedom Wall</a>
-            <a href="mood-daily.php">Mood Tracker</a>
-            <a href="task-planner.php">Task Planner</a>
-            <a href="motivation.php">Motivation</a>
-            <a href="calm-corner.php">Calm Corner</a>
-            <a href="support.php">Support</a>
             <a href="search-user.php">Search People</a>
-            <a href="messages.php">Messages</a>
-            <a href="create-post.php">Create a Post</a>
-            <a href="search-user.php">Search People</a>
-            <a href="profile.php">Your Profile</a>
 
             <?php if ($isLoggedIn): ?>
                 <a class="mc-login" href="logout.php">Log out</a>
             <?php else: ?>
-                <a class="mc-login" href="login.php">Log in</a>
-                <a href="register.php">Register</a>
+                <a href="login.php">Log in</a>
+                <a class="mc-login" href="register.php">Register</a>
             <?php endif; ?>
         </div>
     </nav>
