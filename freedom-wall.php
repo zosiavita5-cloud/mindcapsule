@@ -1,678 +1,745 @@
 
-<?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/db.php';
+/* ==========================================
+   MIND CAPSULE — FREEDOM WALL DESIGN
+   Blush Pink • Rose • Burgundy
+========================================== */
 
-requireLogin();
-
-$pageTitle = 'Task Planner';
-$error = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verifyCsrf();
-
-    $action = $_POST['action'] ?? '';
-
-    if ($action === 'add') {
-        $name = trim($_POST['task_name'] ?? '');
-        $deadline = trim($_POST['deadline'] ?? '');
-
-        if ($name === '' || mb_strlen($name) > 255) {
-            $error = 'Enter a task name of up to 255 characters.';
-        } elseif (
-            $deadline !== '' &&
-            (
-                !preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline) ||
-                !checkdate(
-                    (int) substr($deadline, 5, 2),
-                    (int) substr($deadline, 8, 2),
-                    (int) substr($deadline, 0, 4)
-                )
-            )
-        ) {
-            $error = 'Please enter a valid deadline.';
-        } else {
-            try {
-                $stmt = $pdo->prepare(
-                    'INSERT INTO tasks (user_id, task_name, deadline)
-                     VALUES (?, ?, ?)'
-                );
-
-                $stmt->execute([
-                    $_SESSION['user_id'],
-                    $name,
-                    $deadline !== '' ? $deadline : null
-                ]);
-
-                header('Location: task-planner.php?added=1');
-                exit;
-            } catch (PDOException $e) {
-                $error = 'Unable to add your task. Please try again.';
-            }
-        }
-    } elseif ($action === 'toggle' || $action === 'delete') {
-        $id = filter_input(INPUT_POST, 'task_id', FILTER_VALIDATE_INT);
-
-        if ($id) {
-            if ($action === 'toggle') {
-                $stmt = $pdo->prepare(
-                    'UPDATE tasks
-                     SET is_completed = 1 - is_completed
-                     WHERE id = ? AND user_id = ?'
-                );
-                $stmt->execute([$id, $_SESSION['user_id']]);
-            } else {
-                $stmt = $pdo->prepare(
-                    'DELETE FROM tasks WHERE id = ? AND user_id = ?'
-                );
-                $stmt->execute([$id, $_SESSION['user_id']]);
-            }
-        }
-
-        header('Location: task-planner.php');
-        exit;
-    }
+.freedom-wall {
+    padding: 45px 20px 60px;
+    background: linear-gradient(
+        180deg,
+        #fff0f4 0%,
+        #fff9fb 35%,
+        #fff5f8 100%
+    );
+    min-height: 100vh;
+    color: #654352;
 }
 
-$stmt = $pdo->prepare(
-    'SELECT id, task_name, deadline, is_completed
-     FROM tasks
-     WHERE user_id = ?
-     ORDER BY is_completed ASC,
-              deadline IS NULL ASC,
-              deadline ASC,
-              id DESC'
-);
-$stmt->execute([$_SESSION['user_id']]);
-$tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$totalTasks = count($tasks);
-
-$completed = count(array_filter(
-    $tasks,
-    fn($task) => (int) $task['is_completed'] === 1
-));
-
-$progress = $totalTasks > 0
-    ? (int) round(($completed / $totalTasks) * 100)
-    : 0;
-
-include __DIR__ . '/includes/header.php';
-?>
-
-<style>
-/* ===== MIND CAPSULE TASK PLANNER ===== */
-
-.task-planner {
-    --tp-red: #b83f62;
-    --tp-dark: #683448;
-    --tp-muted: #927783;
-    --tp-pink: #f5dce5;
-    --tp-light: #fff8fb;
-
-    color: var(--tp-dark);
-    padding: 40px 0 65px;
-}
-
-.task-planner,
-.task-planner * {
-    box-sizing: border-box;
-}
-
-.task-planner .tp-container {
-    max-width: 1000px;
+.fw-container {
+    max-width: 1250px;
     margin: 0 auto;
+    width: 100%;
 }
 
-/* Page heading */
+/* HERO SECTION */
 
-.task-planner .tp-heading {
+.fw-hero {
     text-align: center;
-    max-width: 690px;
-    margin: 0 auto 35px;
+    padding: 45px 20px;
+    margin-bottom: 35px;
 }
 
-.task-planner .tp-eyebrow {
-    color: var(--tp-red);
+.fw-symbol {
+    display: block;
+    color: #c77b98;
+    font-size: 21px;
+    margin-bottom: 18px;
+}
+
+.fw-eyebrow,
+.fw-kicker {
+    color: #a45a76;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 3px;
-    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin: 0 0 12px;
 }
 
-.task-planner .tp-heading h1 {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(30px, 5vw, 46px);
+.fw-hero h1 {
+    color: #7f203c;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: clamp(34px, 5vw, 58px);
+    font-weight: 500;
     line-height: 1.2;
-    margin: 12px 0;
+    margin: 12px 0 18px;
 }
 
-.task-planner .tp-heading > p:last-child {
-    color: var(--tp-muted);
-    font-size: 14px;
+.fw-hero h1 span {
+    color: #c72c50;
+    font-style: italic;
+}
+
+.fw-intro {
+    max-width: 600px;
+    margin: 0 auto;
+    color: #906b7b;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+.fw-divider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 28px;
+    color: #b96b87;
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+
+/* MAIN TWO-COLUMN LAYOUT */
+
+.fw-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.4fr);
+    align-items: start;
+    gap: 28px;
+}
+
+.fw-compose-column,
+.fw-community {
+    min-width: 0;
+}
+
+/* CARDS */
+
+.fw-card,
+.fw-post,
+.fw-empty {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #efd0db;
+    border-radius: 22px;
+    box-shadow: 0 12px 35px rgba(127, 32, 60, 0.075);
+}
+
+.fw-card {
+    padding: 28px;
+}
+
+.fw-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.fw-mini-symbol {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: #fff0f4;
+    color: #bd5276;
+    font-size: 24px;
+}
+
+.fw-card-heading h2,
+.fw-community-heading h2 {
+    margin: 0;
+    color: #7f203c;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 25px;
+    font-weight: 500;
+}
+
+.fw-description,
+.fw-community-intro {
+    color: #987888;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: 16px 0 24px;
+}
+
+/* FORM */
+
+.fw-field {
+    margin: 22px 0;
+}
+
+.fw-field label {
+    display: block;
+    color: #85415c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    margin-bottom: 10px;
+}
+
+.fw-field label span {
+    color: #c72c50;
+}
+
+.fw-field select,
+.fw-field textarea,
+.fw-comment-form input,
+.fw-reply-form input {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid #ebcbd7;
+    border-radius: 12px;
+    background: #fff9fb;
+    color: #654352;
+    padding: 13px 14px;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fw-field select:focus,
+.fw-field textarea:focus,
+.fw-comment-form input:focus,
+.fw-reply-form input:focus {
+    border-color: #c77b98;
+    box-shadow: 0 0 0 3px rgba(199, 123, 152, 0.13);
+}
+
+.fw-field textarea {
+    min-height: 150px;
+    resize: vertical;
     line-height: 1.8;
 }
 
-/* Two-column layout without a large outer box */
-
-.task-planner .tp-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    gap: 35px;
-    align-items: start;
+.fw-field textarea::placeholder,
+.fw-comment-form input::placeholder,
+.fw-reply-form input::placeholder {
+    color: #bd9eac;
 }
 
-.task-planner .tp-section-title {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 24px;
-    margin: 0 0 8px;
+.fw-character-note {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 9px;
+    color: #ad8798;
+    font-size: 10px;
 }
 
-.task-planner .tp-description {
-    color: var(--tp-muted);
-    font-size: 13px;
-    line-height: 1.7;
-    margin: 0 0 22px;
+.fw-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #80566a;
+    font-size: 12px;
+    cursor: pointer;
 }
 
-/* Form */
-
-.task-planner .tp-field {
-    margin-bottom: 20px;
+.fw-checkbox input {
+    accent-color: #b53c60;
+    width: 16px;
+    height: 16px;
 }
 
-.task-planner .tp-field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 9px;
+.fw-notice {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    margin: 20px 0;
+    background: #fff0f4;
+    border: 1px solid #f2d5df;
+    border-radius: 13px;
 }
 
-.task-planner .tp-field input {
-    width: 100%;
-    min-width: 0;
-    padding: 13px 14px;
-    border: 1px solid var(--tp-pink);
-    border-radius: 12px;
-    background: var(--tp-light);
-    color: var(--tp-dark);
-    font: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
+.fw-notice-symbol {
+    color: #bd5276;
+    font-size: 18px;
 }
 
-.task-planner .tp-field input:focus {
-    border-color: var(--tp-red);
-    box-shadow: 0 0 0 3px rgba(184, 63, 98, .09);
+.fw-notice p {
+    margin: 0;
+    color: #936b7d;
+    font-size: 11px;
+    line-height: 1.8;
 }
 
-.task-planner .tp-primary-btn {
-    display: block;
-    width: 100%;
+.fw-submit,
+.fw-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
     border: none;
     border-radius: 12px;
-    padding: 14px 18px;
-    background: var(--tp-red);
+    background: linear-gradient(135deg, #c72c50, #8b2345);
     color: #fff;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
-    transition: background .2s, transform .2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.task-planner .tp-primary-btn:hover {
-    background: var(--tp-dark);
-    transform: translateY(-1px);
-}
-
-/* Error and success messages */
-
-.task-planner .tp-message {
-    padding: 12px 14px;
-    border-radius: 10px;
-    margin-bottom: 18px;
+.fw-submit {
+    width: 100%;
+    padding: 15px 18px;
+    margin-top: 20px;
     font-size: 13px;
+}
+
+.fw-button {
+    padding: 11px 17px;
+    font-size: 12px;
+}
+
+.fw-submit:hover,
+.fw-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(127, 32, 60, 0.2);
+}
+
+.fw-button-symbol {
+    font-size: 17px;
+}
+
+.fw-bottom-note {
+    text-align: center;
+    color: #b08a9b;
+    font-size: 10px;
+    margin: 17px 0 0;
+}
+
+/* SIDE QUOTE */
+
+.fw-side-note {
+    position: relative;
+    overflow: hidden;
+    padding: 25px;
+    margin-top: 20px;
+    border: 1px solid #efd0db;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #fbe3eb, #fff6f8);
+}
+
+.fw-side-quote {
+    color: #c77b98;
+    font-family: Georgia, serif;
+    font-size: 55px;
+    line-height: 0.8;
+}
+
+.fw-side-note p {
+    color: #7f203c;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 20px;
     line-height: 1.6;
 }
 
-.task-planner .tp-error {
-    color: #9d2945;
-    background: #fff0f2;
-    border: 1px solid #f1c9d2;
+.fw-side-caption {
+    color: #a45a76;
+    font-size: 9px;
+    letter-spacing: 1.5px;
 }
 
-.task-planner .tp-success {
-    color: #28633b;
-    background: #e8f6ed;
-    border: 1px solid #c6e7d0;
+.fw-side-decoration {
+    display: block;
+    text-align: right;
+    color: #c77b98;
+    margin-top: 15px;
 }
 
-/* Progress */
+/* COMMUNITY HEADING */
 
-.task-planner .tp-progress {
-    margin: 0 0 24px;
-    padding: 17px 18px;
-    background: var(--tp-light);
-    border: 1px solid var(--tp-pink);
-    border-radius: 15px;
-}
-
-.task-planner .tp-progress-top {
+.fw-community-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 11px;
-    font-size: 13px;
+    gap: 15px;
 }
 
-.task-planner .tp-progress-percent {
-    color: var(--tp-red);
-    font-weight: 700;
+.fw-community-heading h2 {
+    font-size: 32px;
 }
 
-.task-planner .tp-progress-track {
-    width: 100%;
-    height: 7px;
-    background: #f0e2e8;
-    border-radius: 20px;
-    overflow: hidden;
+.fw-community-heading h2 span {
+    color: #c72c50;
 }
 
-.task-planner .tp-progress-fill {
-    height: 100%;
-    background: var(--tp-red);
-    border-radius: 20px;
-    transition: width .3s;
-}
-
-/* Individual task cards */
-
-.task-planner .tp-task-list {
+.fw-wall-symbol {
     display: grid;
-    gap: 12px;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #f9dfe7;
+    color: #b53c60;
+    font-size: 24px;
 }
 
-.task-planner .tp-task {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 17px;
-    border: 1px solid var(--tp-pink);
-    border-radius: 15px;
-    background: #fffafd;
-    transition: border-color .2s, background .2s;
+.fw-community-intro {
+    margin-top: 10px;
 }
 
-.task-planner .tp-task:hover {
-    border-color: #e6b3c5;
+/* POST CARDS */
+
+.fw-post-list {
+    display: grid;
+    gap: 20px;
 }
 
-.task-planner .tp-task-info {
+.fw-post {
+    padding: 24px;
     min-width: 0;
-    flex: 1;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.task-planner .tp-task-name {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
+.fw-post:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 35px rgba(127, 32, 60, 0.11);
 }
 
-.task-planner .tp-task-name.tp-done {
-    color: var(--tp-muted);
-    text-decoration: line-through;
+.fw-post-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
-.task-planner .tp-deadline {
-    margin-top: 6px;
-    color: var(--tp-muted);
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.task-planner .tp-deadline.tp-overdue {
-    color: #b83255;
-    font-weight: 700;
-}
-
-.task-planner .tp-status {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 4px 8px;
-    border-radius: 20px;
-    background: #f8e6ed;
-    color: var(--tp-red);
+.fw-post-category {
+    padding: 7px 12px;
+    border-radius: 30px;
+    background: #fff0f4;
+    color: #a13f61;
     font-size: 10px;
     font-weight: 700;
 }
 
-.task-planner .tp-status.tp-status-done {
-    background: #e8f6ed;
-    color: #28633b;
+.fw-post-top time {
+    color: #ae8b9b;
+    font-size: 10px;
 }
 
-/* Task action buttons */
-
-.task-planner .tp-actions {
+.fw-author {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 6px;
+    align-items: center;
+    gap: 12px;
+}
+
+.fw-avatar {
+    display: grid;
+    place-items: center;
     flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f8d5e1, #fcebf1);
+    color: #a6385c;
+    font-size: 21px;
 }
 
-.task-planner .tp-action-btn {
-    padding: 7px 10px;
-    border: 1px solid var(--tp-pink);
-    border-radius: 9px;
-    background: #fff;
-    color: var(--tp-dark);
-    font: inherit;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .2s, color .2s;
-}
-
-.task-planner .tp-action-btn:hover {
-    background: var(--tp-red);
-    border-color: var(--tp-red);
-    color: #fff;
-}
-
-.task-planner .tp-delete-btn:hover {
-    background: #8f2945;
-    border-color: #8f2945;
-}
-
-/* Empty state */
-
-.task-planner .tp-empty {
-    text-align: center;
-    padding: 35px 20px;
-    border: 1px dashed #e5bac9;
-    border-radius: 16px;
-    background: var(--tp-light);
-}
-
-.task-planner .tp-empty-mark {
+.fw-author strong {
     display: block;
-    color: var(--tp-red);
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 30px;
-    margin-bottom: 10px;
-}
-
-.task-planner .tp-empty h3 {
-    font-family: Georgia, "Times New Roman", serif;
-    margin: 0 0 8px;
-}
-
-.task-planner .tp-empty p {
-    color: var(--tp-muted);
+    color: #7f203c;
     font-size: 13px;
-    line-height: 1.7;
+}
+
+.fw-author small {
+    display: block;
+    color: #ad8999;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+.fw-post-content {
+    margin: 22px 0;
+    color: #654352;
+    font-size: 14px;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+/* LIKE AND COMMENT ACTIONS */
+
+.fw-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid #f3dfe6;
+    border-bottom: 1px solid #f3dfe6;
+}
+
+.fw-actions form {
     margin: 0;
 }
 
-.task-planner .tp-reminder {
-    text-align: center;
-    margin: 30px auto 0;
-    color: var(--tp-muted);
+.fw-action-btn,
+.fw-action-static {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 13px;
+    border: 1px solid #efd0db;
+    border-radius: 25px;
+    background: #fff9fb;
+    color: #9c4d6a;
+    font-size: 11px;
+}
+
+.fw-action-btn {
+    cursor: pointer;
+}
+
+.fw-action-btn:hover,
+.fw-action-btn.is-liked {
+    background: #fbe3eb;
+    border-color: #e4a6bb;
+    color: #a3284e;
+}
+
+.fw-action-btn span {
+    font-weight: 700;
+}
+
+/* COMMENTS */
+
+.fw-comments {
+    margin-top: 22px;
+}
+
+.fw-comments h3 {
+    color: #7f203c;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 19px;
+    font-weight: 500;
+    margin: 0 0 18px;
+}
+
+.fw-comments h3 span {
+    color: #c72c50;
+}
+
+.fw-comment {
+    padding: 13px 14px;
+    margin: 12px 0;
+    border-left: 2px solid #e7b2c4;
+    border-radius: 0 12px 12px 0;
+    background: #fff7fa;
+    overflow-wrap: anywhere;
+}
+
+.fw-comment-meta {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.fw-comment-meta strong {
+    color: #8d3655;
+    font-size: 11px;
+}
+
+.fw-comment-meta span {
+    color: #b08a9b;
+    font-size: 10px;
+}
+
+.fw-comment > p {
+    color: #765364;
     font-size: 12px;
     line-height: 1.8;
+    margin: 0 0 10px;
+    overflow-wrap: anywhere;
 }
 
-/* Responsive */
+.fw-comment-form,
+.fw-reply-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+}
 
-@media (max-width: 760px) {
-    .task-planner {
-        padding-top: 27px;
-    }
+.fw-comment-form input,
+.fw-reply-form input {
+    min-width: 0;
+    flex: 1;
+    padding: 11px 12px;
+    font-size: 12px;
+}
 
-    .task-planner .tp-layout {
+.fw-small-btn {
+    padding: 9px 12px;
+    border: 1px solid #e7bdcc;
+    border-radius: 10px;
+    background: #fff;
+    color: #963c5c;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.fw-small-btn:hover {
+    background: #fbe3eb;
+}
+
+.fw-delete-form {
+    margin: 8px 0;
+}
+
+.fw-delete-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 8px;
+    background: #fff0f2;
+    color: #a42d4b;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.fw-delete-btn:hover {
+    background: #f8d8e1;
+}
+
+/* EMPTY WALL */
+
+.fw-empty {
+    padding: 45px 25px;
+    text-align: center;
+}
+
+.fw-empty-symbol {
+    color: #c77b98;
+    font-size: 30px;
+}
+
+.fw-empty h3 {
+    color: #7f203c;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.fw-empty p {
+    max-width: 380px;
+    margin: 0 auto;
+    color: #987888;
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+.fw-empty-decoration {
+    display: block;
+    margin-top: 22px;
+    color: #c77b98;
+}
+
+.fw-alert {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border-radius: 14px;
+    font-size: 13px;
+}
+
+.fw-success {
+    background: #f0faf2;
+    border: 1px solid #cce8d1;
+    color: #326a42;
+}
+
+.fw-error {
+    background: #fff0f2;
+    border: 1px solid #f0cbd4;
+    color: #a42d4b;
+}
+
+.fw-alert p {
+    margin: 5px 0 0;
+}
+
+.fw-alert-icon {
+    font-size: 23px;
+}
+
+/* PAGE FOOTERS */
+
+.fw-community-footer,
+.fw-page-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: #ad8194;
+    text-align: center;
+    font-size: 11px;
+}
+
+.fw-community-footer {
+    padding: 25px 10px;
+}
+
+.fw-page-footer {
+    margin-top: 45px;
+}
+
+.fw-page-footer p {
+    margin: 0;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+    .fw-layout {
         grid-template-columns: minmax(0, 1fr);
-        gap: 35px;
+    }
+
+    .fw-compose-column {
+        order: 1;
+    }
+
+    .fw-community {
+        order: 2;
+    }
+
+    .fw-hero {
+        padding: 25px 10px;
     }
 }
 
-@media (max-width: 480px) {
-    .task-planner .tp-task {
-        flex-direction: column;
+@media (max-width: 520px) {
+    .freedom-wall {
+        padding: 25px 12px 40px;
     }
 
-    .task-planner .tp-actions {
-        justify-content: flex-start;
+    .fw-card,
+    .fw-post {
+        padding: 18px;
+        border-radius: 17px;
+    }
+
+    .fw-hero h1 {
+        font-size: 35px;
+    }
+
+    .fw-divider {
+        gap: 7px;
+        font-size: 8px;
+        letter-spacing: 1px;
+    }
+
+    .fw-community-heading h2 {
+        font-size: 26px;
+    }
+
+    .fw-comment-form,
+    .fw-reply-form {
+        align-items: stretch;
+    }
+
+    .fw-comment-form {
+        flex-wrap: wrap;
+    }
+
+    .fw-comment-form input {
+        flex-basis: 100%;
+    }
+
+    .fw-comment-form .fw-button {
         width: 100%;
     }
 
-    .task-planner .tp-action-btn {
-        padding: 8px 11px;
+    .fw-post-top {
+        align-items: flex-start;
     }
 }
-</style>
-
-<section class="section soft-section task-planner">
-    <div class="container tp-container">
-
-        <header class="tp-heading">
-            <p class="tp-eyebrow">Mind Capsule / One step at a time</p>
-            <h1>Make space for what matters.</h1>
-            <p>
-                You don't need to do everything at once.
-                Start small, keep going, and celebrate every little progress.
-            </p>
-        </header>
-
-        <div class="tp-layout">
-
-            <!-- Add task form -->
-            <section class="tp-form-section">
-                <h2 class="tp-section-title">A new little goal</h2>
-                <p class="tp-description">
-                    Write down one thing you want to get done.
-                </p>
-
-                <?php if ($error !== ''): ?>
-                    <div class="tp-message tp-error" role="alert">
-                        <?= e($error) ?>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (isset($_GET['added'])): ?>
-                    <div class="tp-message tp-success" role="status">
-                        Your task has been added to your list.
-                    </div>
-                <?php endif; ?>
-
-                <form method="POST" action="task-planner.php">
-                    <input
-                        type="hidden"
-                        name="csrf_token"
-                        value="<?= e(csrfToken()) ?>"
-                    >
-                    <input type="hidden" name="action" value="add">
-
-                    <div class="tp-field">
-                        <label for="task_name">What do you need to do?</label>
-                        <input
-                            id="task_name"
-                            name="task_name"
-                            type="text"
-                            maxlength="255"
-                            required
-                            placeholder="e.g. Review my notes"
-                        >
-                    </div>
-
-                    <div class="tp-field">
-                        <label for="deadline">When is it due?</label>
-                        <input
-                            id="deadline"
-                            name="deadline"
-                            type="date"
-                        >
-                    </div>
-
-                    <button class="tp-primary-btn" type="submit">
-                        + Add to my list
-                    </button>
-                </form>
-            </section>
-
-            <!-- Task list -->
-            <section class="tp-list-section">
-                <h2 class="tp-section-title">My little to-do list</h2>
-                <p class="tp-description">
-                    Every completed task is progress worth celebrating.
-                </p>
-
-                <div class="tp-progress">
-                    <div class="tp-progress-top">
-                        <span>
-                            <?= $completed ?> of <?= $totalTasks ?> completed
-                        </span>
-                        <span class="tp-progress-percent">
-                            <?= $progress ?>%
-                        </span>
-                    </div>
-
-                    <div
-                        class="tp-progress-track"
-                        role="progressbar"
-                        aria-label="Task completion"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        aria-valuenow="<?= $progress ?>"
-                    >
-                        <div
-                            class="tp-progress-fill"
-                            style="width: <?= $progress ?>%;"
-                        ></div>
-                    </div>
-                </div>
-
-                <?php if (!$tasks): ?>
-                    <div class="tp-empty">
-                        <span class="tp-empty-mark">♡</span>
-                        <h3>A fresh start</h3>
-                        <p>
-                            Your task list is waiting for you.
-                            Add one small goal to begin.
-                        </p>
-                    </div>
-                <?php else: ?>
-                    <div class="tp-task-list">
-                        <?php foreach ($tasks as $task): ?>
-                            <?php
-                                $isDone = (int) $task['is_completed'] === 1;
-
-                                $isOverdue =
-                                    !$isDone &&
-                                    !empty($task['deadline']) &&
-                                    $task['deadline'] < date('Y-m-d');
-                            ?>
-
-                            <article class="tp-task">
-                                <div class="tp-task-info">
-                                    <p class="tp-task-name <?= $isDone ? 'tp-done' : '' ?>">
-                                        <?= e($task['task_name']) ?>
-                                    </p>
-
-                                    <div class="tp-deadline <?= $isOverdue ? 'tp-overdue' : '' ?>">
-                                        <?php if (!empty($task['deadline'])): ?>
-                                            <?php if ($isOverdue): ?>
-                                                Past due ·
-                                            <?php endif; ?>
-
-                                            Due:
-                                            <?= e(date(
-                                                'M j, Y',
-                                                strtotime($task['deadline'])
-                                            )) ?>
-                                        <?php else: ?>
-                                            No deadline set
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <span class="tp-status <?= $isDone ? 'tp-status-done' : '' ?>">
-                                        <?= $isDone ? 'Completed' : 'In progress' ?>
-                                    </span>
-                                </div>
-
-                                <div class="tp-actions">
-                                    <form method="POST" action="task-planner.php">
-                                        <input
-                                            type="hidden"
-                                            name="csrf_token"
-                                            value="<?= e(csrfToken()) ?>"
-                                        >
-                                        <input
-                                            type="hidden"
-                                            name="task_id"
-                                            value="<?= (int) $task['id'] ?>"
-                                        >
-                                        <input
-                                            type="hidden"
-                                            name="action"
-                                            value="toggle"
-                                        >
-
-                                        <button class="tp-action-btn" type="submit">
-                                            <?= $isDone ? 'Undo' : 'Complete' ?>
-                                        </button>
-                                    </form>
-
-                                    <form
-                                        method="POST"
-                                        action="task-planner.php"
-                                        onsubmit="return confirm('Delete this task?');"
-                                    >
-                                        <input
-                                            type="hidden"
-                                            name="csrf_token"
-                                            value="<?= e(csrfToken()) ?>"
-                                        >
-                                        <input
-                                            type="hidden"
-                                            name="task_id"
-                                            value="<?= (int) $task['id'] ?>"
-                                        >
-                                        <input
-                                            type="hidden"
-                                            name="action"
-                                            value="delete"
-                                        >
-
-                                        <button
-                                            class="tp-action-btn tp-delete-btn"
-                                            type="submit"
-                                        >
-                                            Delete
-                                        </button>
-                                    </form>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </section>
-
-        </div>
-
-        <p class="tp-reminder">
-            You are allowed to rest, reset, and begin again.
-            <br>
-            Small steps count, too.
-        </p>
-
-    </div>
-</section>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
