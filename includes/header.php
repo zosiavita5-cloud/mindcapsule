@@ -9,7 +9,6 @@ $baseUrl = $isAdminPage ? '../' : '';
 
 $pageTitle = $pageTitle ?? 'Home';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,11 +21,11 @@ $pageTitle = $pageTitle ?? 'Home';
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Fallback / Main Stylesheet link -->
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="<?= $baseUrl ?>assets/css/style.css">
 
     <style>
-        /* --- INLINE NAVBAR & HEADER STYLING FIX --- */
+        /* --- CLEAN HEADER & NAVBAR FIX --- */
         body {
             margin: 0;
             font-family: 'Plus Jakarta Sans', sans-serif, system-ui;
@@ -35,7 +34,7 @@ $pageTitle = $pageTitle ?? 'Home';
         }
 
         .site-header {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid #f2cbd7;
             position: sticky;
@@ -45,25 +44,25 @@ $pageTitle = $pageTitle ?? 'Home';
         }
 
         .navbar {
-            max-width: 1350px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 14px 24px;
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
         }
 
         .logo {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 600;
             color: #7f203c;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         .logo span {
@@ -84,21 +83,29 @@ $pageTitle = $pageTitle ?? 'Home';
         .nav-links {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap; /* Pinipilit maging isang linya */
             gap: 6px;
             list-style: none;
             margin: 0;
             padding: 0;
+            overflow-x: auto; /* Nagiging scrollable kung sakaling medyo maliit ang screen */
+            scrollbar-width: none; /* Tinanggal ang scrollbar para malinis tingnan */
+        }
+
+        .nav-links::-webkit-scrollbar {
+            display: none;
         }
 
         .nav-links a {
-            display: inline-block;
-            padding: 8px 13px;
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 12px;
             border-radius: 50px;
             color: #8c4c65;
             text-decoration: none;
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 500;
+            white-space: nowrap;
             transition: all 0.2s ease;
             background: #fff5f8;
             border: 1px solid #f7d9e3;
@@ -111,35 +118,51 @@ $pageTitle = $pageTitle ?? 'Home';
             transform: translateY(-1px);
         }
 
-        /* Log out highlight style */
-        .nav-links a[href*="logout.php"] {
-            background: #fff0f2;
-            color: #a42d4b;
+        /* Profile & Logout Custom Style */
+        .nav-links a[href*="profile.php"] {
+            background: #fff0f4;
             border-color: #f0cbd4;
         }
 
+        .nav-links a[href*="logout.php"] {
+            background: linear-gradient(135deg, #e03a6b 0%, #ad1f4e 100%);
+            color: #fff;
+            border-color: transparent;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(224, 58, 107, 0.25);
+        }
+
         .nav-links a[href*="logout.php"]:hover {
-            background: #a42d4b;
+            background: linear-gradient(135deg, #c72c50 0%, #8b2345 100%);
             color: #fff;
         }
 
-        @media (max-width: 900px) {
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
             .menu-toggle {
                 display: block;
             }
             .nav-links {
                 display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
                 width: 100%;
                 flex-direction: column;
                 align-items: stretch;
-                padding-top: 10px;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(12px);
+                padding: 15px 20px;
+                border-bottom: 1px solid #f2cbd7;
+                box-shadow: 0 10px 25px rgba(184, 74, 112, 0.1);
             }
             .nav-links.active {
                 display: flex;
             }
             .nav-links a {
-                text-align: center;
+                justify-content: center;
                 border-radius: 12px;
+                padding: 10px;
             }
         }
     </style>
@@ -181,7 +204,6 @@ $pageTitle = $pageTitle ?? 'Home';
 </header>
 
 <script>
-    // Simple toggle support for mobile menu
     document.getElementById('menuToggle')?.addEventListener('click', function() {
         const navLinks = document.getElementById('navLinks');
         navLinks.classList.toggle('active');
