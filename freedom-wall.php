@@ -156,7 +156,7 @@ function renderComments(
     }
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+
             "SELECT c.id, c.user_id, c.content, c.created_at,
                     u.username
              FROM post_comments c
