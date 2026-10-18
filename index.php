@@ -7,15 +7,25 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <style>
-/* --- HOMEPAGE SPECIFIC DESIGN --- */
+/* --- HOMEPAGE CONTAINER BOX DESIGN --- */
 .home-page {
     --home-rose: #b95f7d;
     --home-burgundy: #7f203c;
     --home-dark: #49343f;
     --home-muted: #887781;
-    --home-pink-light: #fff0f4;
+    background-color: #fbf9f7;
     color: var(--home-dark);
     padding: 20px 0 60px;
+}
+
+.home-page .home-container-box {
+    max-width: 1250px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #fff4f6 0%, #fff7f9 50%, #fff0f3 100%);
+    border: 1px solid #f2cbd7;
+    border-radius: 35px;
+    padding: clamp(30px, 5vw, 60px);
+    box-shadow: 0 20px 50px rgba(185, 95, 125, 0.08);
 }
 
 .home-page .home-hero {
@@ -23,12 +33,7 @@ include __DIR__ . '/includes/header.php';
     grid-template-columns: 1.25fr 0.75fr;
     align-items: center;
     gap: 40px;
-    padding: clamp(40px, 6vw, 75px);
-    background: linear-gradient(120deg, #fff0f4 0%, #fde7ed 55%, #f8dce5 100%);
-    border: 1px solid #f4d4df;
-    border-radius: 30px;
-    box-shadow: 0 15px 40px rgba(127, 32, 60, 0.05);
-    margin-bottom: 45px;
+    margin-bottom: 50px;
 }
 
 .home-page .home-eyebrow {
@@ -37,14 +42,14 @@ include __DIR__ . '/includes/header.php';
     font-weight: 800;
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin: 0 0 12px;
+    margin: 0 0 14px;
 }
 
 .home-page .home-hero h1 {
     margin: 0 0 20px;
     color: var(--home-burgundy);
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: clamp(38px, 5.5vw, 60px);
+    font-size: clamp(38px, 5.5vw, 62px);
     font-weight: 500;
     line-height: 1.15;
 }
@@ -56,9 +61,9 @@ include __DIR__ . '/includes/header.php';
 
 .home-page .home-hero p {
     color: var(--home-muted);
-    font-size: 16px;
+    font-size: 15.5px;
     line-height: 1.9;
-    max-width: 580px;
+    max-width: 550px;
     margin: 0 0 30px;
 }
 
@@ -88,12 +93,12 @@ include __DIR__ . '/includes/header.php';
 }
 
 .home-page .home-circle {
-    width: 230px;
-    height: 230px;
+    width: 220px;
+    height: 220px;
     background: var(--home-burgundy);
-    border: 14px solid #f7d4df;
+    border: 12px solid #f7d4df;
     border-radius: 50%;
-    box-shadow: 0 0 0 14px rgba(255,255,255,.5), 0 0 0 30px rgba(231,139,164,.12);
+    box-shadow: 0 0 0 12px rgba(255,255,255,.6), 0 0 0 26px rgba(231,139,164,.12);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -106,13 +111,13 @@ include __DIR__ . '/includes/header.php';
 
 .home-page .home-circle h3 {
     margin: 0;
-    font-size: 28px;
+    font-size: 26px;
     color: #fff;
 }
 
 .home-page .home-circle p {
     margin: 6px 0 0;
-    font-size: 11px;
+    font-size: 10.5px;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: 1px;
     opacity: 0.9;
@@ -126,38 +131,41 @@ include __DIR__ . '/includes/header.php';
 }
 
 .home-page .home-card {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.9);
     border: 1px solid #efd0db;
-    border-radius: 22px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(127, 32, 60, 0.05);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(127, 32, 60, 0.04);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .home-page .home-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(127, 32, 60, 0.1);
+    box-shadow: 0 15px 35px rgba(127, 32, 60, 0.08);
 }
 
 .home-page .home-card h3 {
-    margin: 0 0 12px;
+    margin: 0 0 10px;
     color: var(--home-burgundy);
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 22px;
+    font-size: 21px;
 }
 
 .home-page .home-card p {
     margin: 0;
     color: var(--home-muted);
-    font-size: 14px;
+    font-size: 13.5px;
     line-height: 1.8;
 }
 
 @media (max-width: 900px) {
+    .home-page .home-container-box {
+        padding: 20px;
+        border-radius: 20px;
+    }
     .home-page .home-hero {
         grid-template-columns: 1fr;
         text-align: center;
-        padding: 35px 20px;
     }
     .home-page .home-hero p {
         margin-left: auto;
@@ -175,50 +183,55 @@ include __DIR__ . '/includes/header.php';
 <div class="home-page">
     <div class="container">
         
-        <!-- HERO SECTION -->
-        <section class="home-hero">
-            <div>
-                <p class="home-eyebrow">A LITTLE SPACE JUST FOR YOU</p>
-                <h1>Your feelings deserve a <span>safe place.</span></h1>
-                <p>
-                    School and daily life can get overwhelming, and things do not always go as planned. 
-                    Mind Capsule is a gentle corner where you can express your thoughts, understand your feelings, 
-                    and take things one step at a time.
-                </p>
-                <a href="freedom-wall.php" class="home-btn">Visit your safe space ♡</a>
-            </div>
-
-            <div class="home-visual">
-                <div class="home-circle">
-                    <h3>Mind</h3>
-                    <p>PAUSE. BREATHE. BEGIN.</p>
+        <!-- MALAKING PINK CONTAINER BOX -->
+        <div class="home-container-box">
+            
+            <!-- HERO SECTION -->
+            <section class="home-hero">
+                <div>
+                    <p class="home-eyebrow">A LITTLE SPACE JUST FOR YOU</p>
+                    <h1>Your feelings deserve a <span>safe place.</span></h1>
+                    <p>
+                        School can get overwhelming, and life does not always go as planned. Mind 
+                        Capsule is a gentle space where you can express yourself, understand your 
+                        feelings, and take things one step at a time.
+                    </p>
+                    <a href="freedom-wall.php" class="home-btn">Visit your safe space</a>
                 </div>
+
+                <div class="home-visual">
+                    <div class="home-circle">
+                        <h3>Mind</h3>
+                        <p>PAUSE. BREATHE. BEGIN.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FEATURES / CARDS GRID -->
+            <div style="margin-top: 45px;">
+                <p class="home-eyebrow">FEATURES</p>
+                <h2 style="font-family:'Playfair Display',Georgia,serif; font-size:30px; color:#7f203c; margin:4px 0 22px;">
+                    Everything you need to find your balance.
+                </h2>
             </div>
-        </section>
 
-        <!-- FEATURES / DASHBOARD CARDS -->
-        <div style="margin-top: 50px;">
-            <p class="home-eyebrow">FEATURES</p>
-            <h2 style="font-family:'Playfair Display',Georgia,serif; font-size:32px; color:#7f203c; margin:5px 0 25px;">
-                Everything you need to find your balance.
-            </h2>
-        </div>
+            <div class="home-grid">
+                <article class="home-card">
+                    <h3>Freedom Wall</h3>
+                    <p>Share your heavy thoughts, little victories, and personal reflections anonymously or openly without judgment.</p>
+                </article>
 
-        <div class="home-grid">
-            <article class="home-card">
-                <h3>Freedom Wall</h3>
-                <p>Share your heavy thoughts, little victories, and personal reflections anonymously or openly without judgment.</p>
-            </article>
+                <article class="home-card">
+                    <h3>Mood Tracker</h3>
+                    <p>Check in with yourself daily, record how you're feeling, and look back on your emotional patterns over time.</p>
+                </article>
 
-            <article class="home-card">
-                <h3>Mood Tracker</h3>
-                <p>Check in with yourself daily, record how you're feeling, and look back on your emotional patterns over time.</p>
-            </article>
+                <article class="home-card">
+                    <h3>Task Planner</h3>
+                    <p>Break down your academic or personal goals into small, manageable steps so you never feel overwhelmed.</p>
+                </article>
+            </div>
 
-            <article class="home-card">
-                <h3>Task Planner</h3>
-                <p>Break down your academic or personal goals into small, manageable steps so you never feel overwhelmed.</p>
-            </article>
         </div>
 
     </div>
