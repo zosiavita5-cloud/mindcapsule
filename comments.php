@@ -1,4 +1,3 @@
-```php
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
@@ -231,4 +230,3 @@ try {
     header('Location: freedom-wall.php?error=comment');
     exit;
 }
-```
