@@ -52,13 +52,15 @@ if ($isFetch) {
             ORDER BY created_at ASC, id ASC
         ");
         $stmt->execute([
-            $currentUserId, $receiverId,
-            $receiverId, $currentUserId
+            $currentUserId,
+            $receiverId,
+            $receiverId,
+            $currentUserId
         ]);
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         $safeMessages = [];
+
         foreach ($rows as $row) {
             $safeMessages[] = [
                 'id' => (int) $row['id'],
@@ -74,6 +76,7 @@ if ($isFetch) {
         echo json_encode([
             'messages' => $safeMessages
         ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+
     } catch (PDOException $exception) {
         error_log('Message refresh error: ' . $exception->getMessage());
         http_response_code(500);
@@ -97,8 +100,12 @@ if ($search !== '') {
             ORDER BY username ASC
             LIMIT 50
         ");
-        $stmt->execute([$currentUserId, '%' . $search . '%']);
+        $stmt->execute([
+            $currentUserId,
+            '%' . $search . '%'
+        ]);
         $searchResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     } catch (PDOException $exception) {
         error_log('User search error: ' . $exception->getMessage());
         $error = 'Unable to search accounts right now.';
@@ -107,23 +114,30 @@ if ($search !== '') {
 
 /*
 |--------------------------------------------------------------------------
-| SEND MESSAGE
+| SEND MESSAGE + CREATE NOTIFICATION
 |--------------------------------------------------------------------------
 */
-if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['send_message'])) {
-
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['send_message'])
+) {
     verifyCsrf();
 
     $postedReceiverId = (int) ($_POST['receiver_id'] ?? 0);
     $messageText = trim((string) ($_POST['message_text'] ?? ''));
 
-    if ($postedReceiverId <= 0 || $postedReceiverId === $currentUserId) {
+    if (
+        $postedReceiverId <= 0
+        || $postedReceiverId === $currentUserId
+    ) {
         $error = 'Please select a valid account.';
+
     } elseif ($messageText === '') {
         $error = 'Please enter a message first.';
+
     } elseif (mb_strlen($messageText, 'UTF-8') > 5000) {
         $error = 'Your message is too long. Maximum length is 5,000 characters.';
+
     } else {
         try {
             $stmt = $pdo->prepare(
@@ -133,21 +147,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
 
             if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
                 $error = 'That account could not be found.';
+
             } else {
+                // Save the private message first.
                 $stmt = $pdo->prepare("
                     INSERT INTO user_messages
                         (sender_id, receiver_id, message_text, created_at)
                     VALUES (?, ?, ?, NOW())
                 ");
+
                 $stmt->execute([
                     $currentUserId,
                     $postedReceiverId,
                     $messageText
                 ]);
 
+                $messageId = (int) $pdo->lastInsertId();
+
+                // Create a notification for the recipient.
+                // Notification failure must not undo the sent message.
+                try {
+                    $notification = $pdo->prepare(
+                        'INSERT INTO notifications
+                            (
+                                user_id,
+                                actor_id,
+                                type,
+                                title,
+                                message,
+                                link,
+                                related_message_id,
+                                is_read,
+                                created_at
+                            )
+                         VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW())'
+                    );
+
+                    $notification->execute([
+                        $postedReceiverId,
+                        $currentUserId,
+                        'message',
+                        'New private message',
+                        'You received a new private message.',
+                        'messages.php?to=' . $currentUserId,
+                        $messageId
+                    ]);
+
+                } catch (Throwable $notificationException) {
+                    error_log(
+                        'Private message notification error: '
+                        . $notificationException->getMessage()
+                    );
+                }
+
                 header('Location: messages.php?to=' . $postedReceiverId);
                 exit;
             }
+
         } catch (PDOException $exception) {
             error_log('Send message error: ' . $exception->getMessage());
             $error = 'Message could not be sent. Please check the database setup.';
@@ -173,10 +229,12 @@ if ($receiverId > 0 && $receiverId !== $currentUserId) {
         if (!$receiver) {
             $receiverId = 0;
         }
+
     } catch (PDOException $exception) {
         error_log('Receiver lookup error: ' . $exception->getMessage());
         $receiverId = 0;
     }
+
 } else {
     $receiverId = 0;
 }
@@ -203,8 +261,15 @@ try {
         GROUP BY u.id, u.username
         ORDER BY last_message_time DESC
     ");
-    $stmt->execute([$currentUserId, $currentUserId, $currentUserId]);
+
+    $stmt->execute([
+        $currentUserId,
+        $currentUserId,
+        $currentUserId
+    ]);
+
     $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $exception) {
     error_log('Conversation list error: ' . $exception->getMessage());
     $error = $error ?: 'Unable to load conversations. Check the database setup.';
@@ -224,11 +289,16 @@ if ($receiverId > 0 && $receiver) {
                OR (sender_id = ? AND receiver_id = ?)
             ORDER BY created_at ASC, id ASC
         ");
+
         $stmt->execute([
-            $currentUserId, $receiverId,
-            $receiverId, $currentUserId
+            $currentUserId,
+            $receiverId,
+            $receiverId,
+            $currentUserId
         ]);
+
         $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     } catch (PDOException $exception) {
         error_log('Load messages error: ' . $exception->getMessage());
         $error = $error ?: 'Unable to load this conversation.';
@@ -447,7 +517,8 @@ require_once __DIR__ . '/includes/header.php';
                     <?php else: ?>
                         <?php foreach ($messages as $message): ?>
                             <?php $isMine = (int)$message['sender_id'] === $currentUserId; ?>
-                            <div class="chat-message <?= $isMine ? 'mine' : '' ?>">
+                            <div class="chat-message <?= $isMine ? 'mine' : '' ?>"
+                                 data-message-id="<?= (int)$message['id'] ?>">
                                 <?= e($message['message_text']) ?>
                                 <small><?= e(date('M j, Y · g:i A', strtotime($message['created_at']))) ?></small>
                             </div>
@@ -485,13 +556,15 @@ require_once __DIR__ . '/includes/header.php';
         const bubble = document.createElement('div');
         bubble.className = 'chat-message' +
             (Number(message.sender_id) === currentUserId ? ' mine' : '');
+        bubble.dataset.messageId = String(message.id);
 
-        // Use textContent so message text is treated as text, not HTML.
+        // Treat message text as text, not HTML.
         bubble.appendChild(document.createTextNode(message.message_text));
 
         const time = document.createElement('small');
         time.textContent = message.created_at;
         bubble.appendChild(time);
+
         return bubble;
     }
 
@@ -510,28 +583,10 @@ require_once __DIR__ . '/includes/header.php';
             const wasNearBottom =
                 chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight < 100;
 
-            const previousIds = new Set(
-                Array.from(chatBody.querySelectorAll('[data-message-id]'))
-                    .map(el => el.dataset.messageId)
-            );
-
-            const knownIds = new Set();
             const fragment = document.createDocumentFragment();
 
             for (const message of data.messages) {
-                const id = String(message.id);
-                knownIds.add(id);
-
-                let bubble = chatBody.querySelector(
-                    '[data-message-id="' + CSS.escape(id) + '"]'
-                );
-
-                if (!bubble) {
-                    bubble = addMessage(message);
-                }
-
-                bubble.dataset.messageId = id;
-                fragment.appendChild(bubble);
+                fragment.appendChild(addMessage(message));
             }
 
             chatBody.replaceChildren(fragment);
@@ -539,7 +594,8 @@ require_once __DIR__ . '/includes/header.php';
             if (data.messages.length === 0) {
                 const empty = document.createElement('p');
                 empty.className = 'messages-empty';
-                empty.textContent = 'This is the beginning of your conversation. Send the first message below.';
+                empty.textContent =
+                    'This is the beginning of your conversation. Send the first message below.';
                 chatBody.appendChild(empty);
             }
 
@@ -551,7 +607,6 @@ require_once __DIR__ . '/includes/header.php';
         }
     }
 
-    // Check for new messages every three seconds.
     window.setInterval(refreshMessages, 3000);
 })();
 </script>
