@@ -5,14 +5,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $currentScript = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-$isAdminPage = (strpos($currentScript, '/admin/') !== false);
-
+$isAdminPage = strpos($currentScript, '/admin/') !== false;
 $baseUrl = $isAdminPage ? '../' : '';
 
-$pageTitle = $pageTitle ?? 'Mind Capsule';
-
-$isLoggedIn = isset($_SESSION['user_id']);
-$userName = $_SESSION['name'] ?? 'User';
+$pageTitle = $pageTitle ?? 'Home';
 ?>
 
 <!DOCTYPE html>
@@ -37,30 +33,28 @@ $userName = $_SESSION['name'] ?? 'User';
         <button
             class="menu-toggle"
             type="button"
-            aria-label="Toggle navigation"
-            aria-expanded="false"
             id="menuToggle"
+            aria-label="Toggle navigation"
+            aria-controls="navLinks"
+            aria-expanded="false"
         >
             ☰
         </button>
 
         <div class="nav-links" id="navLinks">
             <a href="<?= $baseUrl ?>index.php">Home</a>
-            <a href="<?= $baseUrl ?>motivation.php">Motivation</a>
-            <a href="<?= $baseUrl ?>calm-corner.php">Calm Corner</a>
             <a href="<?= $baseUrl ?>freedom-wall.php">Freedom Wall</a>
             <a href="<?= $baseUrl ?>mood-daily.php">Mood Tracker</a>
-
-            <?php if ($isLoggedIn): ?>
-                <a href="<?= $baseUrl ?>create-post.php">Create Post</a>
-                <a href="<?= $baseUrl ?>search-user.php">Search People</a>
-                <a href="<?= $baseUrl ?>messages.php">Messages</a>
-                <a href="<?= $baseUrl ?>profile.php">My Profile</a>
-                <a href="<?= $baseUrl ?>logout.php">Log Out</a>
-            <?php else: ?>
-                <a href="<?= $baseUrl ?>login.php">Log In</a>
-                <a href="<?= $baseUrl ?>register.php">Register</a>
-            <?php endif; ?>
+            <a href="<?= $baseUrl ?>task-planner.php">Task Planner</a>
+            <a href="<?= $baseUrl ?>motivation.php">Motivation</a>
+            <a href="<?= $baseUrl ?>calm-corner.php">Calm Corner</a>
+            <a href="<?= $baseUrl ?>support.php">Support</a>
+            <a href="<?= $baseUrl ?>search-user.php">Search People</a>
+            <a href="<?= $baseUrl ?>messages.php">Messages</a>
+            <a href="<?= $baseUrl ?>create-post.php">Create a Post</a>
+            <a href="<?= $baseUrl ?>search-user.php">Search People</a>
+            <a href="<?= $baseUrl ?>profile.php">Your Profile</a>
+            <a href="<?= $baseUrl ?>logout.php">Log out</a>
         </div>
     </nav>
 </header>
