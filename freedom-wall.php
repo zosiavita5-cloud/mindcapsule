@@ -218,6 +218,7 @@ function renderComments(
             echo '</form>';
         }
 
+     
         renderComments(
             $pdo,
             $postId,
