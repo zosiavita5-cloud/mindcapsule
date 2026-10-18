@@ -88,6 +88,8 @@ function renderComments(
         return;
     }
 
+function getComments(PDO $pdo, int $postId, ?int $parentId = null): array
+{
     if ($parentId === null) {
         $stmt = $pdo->prepare(
             "SELECT c.id, c.user_id, c.content, c.created_at,
@@ -102,6 +104,20 @@ function renderComments(
         $stmt->execute([$postId]);
     } else {
         $stmt = $pdo->prepare(
+            "SELECT c.id, c.user_id, c.content, c.created_at,
+                    c.parent_id, u.username
+             FROM post_comments c
+             LEFT JOIN users u ON u.id = c.user_id
+             WHERE c.post_id = ?
+               AND c.parent_id = ?
+             ORDER BY c.created_at ASC"
+        );
+
+        $stmt->execute([$postId, $parentId]);
+    }
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
             "SELECT c.id, c.user_id, c.content, c.created_at,
                     u.username
              FROM post_comments c
